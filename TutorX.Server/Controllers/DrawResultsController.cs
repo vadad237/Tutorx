@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using TutorX.Infrastructure.Entities;
 using TutorX.Infrastructure.Repositories;
+using TutorX.Server.Services;
+using TutorX.Shared.DTOs;
 
 namespace TutorX.Server.Controllers;
 
@@ -9,21 +10,24 @@ namespace TutorX.Server.Controllers;
 public class DrawResultsController : ControllerBase
 {
  private readonly IDrawResultRepository _drawResultRepository;
+ private readonly IMappingService _mappingService;
 
- public DrawResultsController(IDrawResultRepository drawResultRepository)
+ public DrawResultsController(IDrawResultRepository drawResultRepository, IMappingService mappingService)
  {
  _drawResultRepository = drawResultRepository;
+ _mappingService = mappingService;
  }
 
  [HttpGet]
- public async Task<ActionResult<IEnumerable<DrawResult>>> GetDrawResults()
+ public async Task<ActionResult<IEnumerable<DrawResultDto>>> GetDrawResults()
  {
  var results = await _drawResultRepository.GetResultsWithDetailsAsync();
- return Ok(results);
+ var resultDtos = results.Select(_mappingService.MapToDto);
+ return Ok(resultDtos);
  }
 
  [HttpGet("{id}")]
- public async Task<ActionResult<DrawResult>> GetDrawResult(int id)
+ public async Task<ActionResult<DrawResultDto>> GetDrawResult(int id)
  {
  var result = await _drawResultRepository.GetByIdAsync(id);
 
@@ -32,6 +36,6 @@ public class DrawResultsController : ControllerBase
  return NotFound();
  }
 
- return Ok(result);
+ return Ok(_mappingService.MapToDto(result));
  }
 }

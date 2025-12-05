@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using TutorX.Infrastructure.Entities;
 using TutorX.Infrastructure.Repositories;
+using TutorX.Server.Services;
+using TutorX.Shared.DTOs;
 
 namespace TutorX.Server.Controllers;
 
@@ -9,21 +10,24 @@ namespace TutorX.Server.Controllers;
 public class ActivityAssignmentsController : ControllerBase
 {
     private readonly IActivityAssignmentRepository _assignmentRepository;
+    private readonly IMappingService _mappingService;
 
-    public ActivityAssignmentsController(IActivityAssignmentRepository assignmentRepository)
+    public ActivityAssignmentsController(IActivityAssignmentRepository assignmentRepository, IMappingService mappingService)
     {
         _assignmentRepository = assignmentRepository;
+        _mappingService = mappingService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ActivityAssignment>>> GetActivityAssignments()
+    public async Task<ActionResult<IEnumerable<ActivityAssignmentDto>>> GetActivityAssignments()
     {
         var assignments = await _assignmentRepository.GetAssignmentsWithDetailsAsync();
-        return Ok(assignments);
+        var assignmentDtos = assignments.Select(_mappingService.MapToDto);
+        return Ok(assignmentDtos);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ActivityAssignment>> GetActivityAssignment(int id)
+    public async Task<ActionResult<ActivityAssignmentDto>> GetActivityAssignment(int id)
     {
         var assignment = await _assignmentRepository.GetByIdAsync(id);
 
@@ -32,33 +36,31 @@ public class ActivityAssignmentsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(assignment);
+        return Ok(_mappingService.MapToDto(assignment));
     }
 
     [HttpPost]
-    public async Task<ActionResult<ActivityAssignment>> CreateActivityAssignment(ActivityAssignment assignment)
+    public async Task<ActionResult<ActivityAssignmentDto>> CreateActivityAssignment(CreateActivityAssignmentDto createDto)
     {
+        var assignment = _mappingService.MapToEntity(createDto);
         await _assignmentRepository.AddAsync(assignment);
         await _assignmentRepository.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetActivityAssignment), new { id = assignment.Id }, assignment);
+        var assignmentDto = _mappingService.MapToDto(assignment);
+        return CreatedAtAction(nameof(GetActivityAssignment), new { id = assignment.Id }, assignmentDto);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateActivityAssignment(int id, ActivityAssignment assignment)
+    public async Task<IActionResult> UpdateActivityAssignment(int id, UpdateActivityAssignmentDto updateDto)
     {
-        if (id != assignment.Id)
-        {
-            return BadRequest();
-        }
-
         var existingAssignment = await _assignmentRepository.GetByIdAsync(id);
         if (existingAssignment == null)
         {
             return NotFound();
         }
 
-        _assignmentRepository.Update(assignment);
+        _mappingService.MapToEntity(updateDto, existingAssignment);
+        _assignmentRepository.Update(existingAssignment);
         await _assignmentRepository.SaveChangesAsync();
 
         return NoContent();

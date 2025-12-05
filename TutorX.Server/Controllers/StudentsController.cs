@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using TutorX.Infrastructure.Entities;
 using TutorX.Infrastructure.Repositories;
+using TutorX.Server.Services;
+using TutorX.Shared.DTOs;
 
 namespace TutorX.Server.Controllers;
 
@@ -9,21 +10,24 @@ namespace TutorX.Server.Controllers;
 public class StudentsController : ControllerBase
 {
  private readonly IStudentRepository _studentRepository;
+ private readonly IMappingService _mappingService;
 
- public StudentsController(IStudentRepository studentRepository)
+ public StudentsController(IStudentRepository studentRepository, IMappingService mappingService)
  {
  _studentRepository = studentRepository;
+ _mappingService = mappingService;
  }
 
  [HttpGet]
- public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
+ public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
  {
  var students = await _studentRepository.GetAllAsync();
- return Ok(students);
+ var studentDtos = students.Select(_mappingService.MapToDto);
+ return Ok(studentDtos);
  }
 
  [HttpGet("{id}")]
- public async Task<ActionResult<Student>> GetStudent(int id)
+ public async Task<ActionResult<StudentDto>> GetStudent(int id)
  {
  var student = await _studentRepository.GetByIdAsync(id);
 
@@ -32,33 +36,31 @@ public class StudentsController : ControllerBase
  return NotFound();
  }
 
- return Ok(student);
+ return Ok(_mappingService.MapToDto(student));
  }
 
  [HttpPost]
- public async Task<ActionResult<Student>> CreateStudent(Student student)
+ public async Task<ActionResult<StudentDto>> CreateStudent(CreateStudentDto createDto)
  {
+ var student = _mappingService.MapToEntity(createDto);
  await _studentRepository.AddAsync(student);
  await _studentRepository.SaveChangesAsync();
 
- return CreatedAtAction(nameof(GetStudent), new { id = student.Id }, student);
+ var studentDto = _mappingService.MapToDto(student);
+ return CreatedAtAction(nameof(GetStudent), new { id = student.Id }, studentDto);
  }
 
  [HttpPut("{id}")]
- public async Task<IActionResult> UpdateStudent(int id, Student student)
+ public async Task<IActionResult> UpdateStudent(int id, UpdateStudentDto updateDto)
  {
- if (id != student.Id)
- {
- return BadRequest();
- }
-
  var existingStudent = await _studentRepository.GetByIdAsync(id);
  if (existingStudent == null)
  {
  return NotFound();
  }
 
- _studentRepository.Update(student);
+ _mappingService.MapToEntity(updateDto, existingStudent);
+ _studentRepository.Update(existingStudent);
  await _studentRepository.SaveChangesAsync();
 
  return NoContent();

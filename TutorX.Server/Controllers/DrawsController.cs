@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using TutorX.Infrastructure.Entities;
 using TutorX.Infrastructure.Repositories;
+using TutorX.Server.Services;
+using TutorX.Shared.DTOs;
 
 namespace TutorX.Server.Controllers;
 
@@ -9,21 +10,24 @@ namespace TutorX.Server.Controllers;
 public class DrawsController : ControllerBase
 {
  private readonly IDrawRepository _drawRepository;
+ private readonly IMappingService _mappingService;
 
- public DrawsController(IDrawRepository drawRepository)
+ public DrawsController(IDrawRepository drawRepository, IMappingService mappingService)
  {
  _drawRepository = drawRepository;
+ _mappingService = mappingService;
  }
 
  [HttpGet]
- public async Task<ActionResult<IEnumerable<Draw>>> GetDraws()
+ public async Task<ActionResult<IEnumerable<DrawDto>>> GetDraws()
  {
  var draws = await _drawRepository.GetDrawsWithDetailsAsync();
- return Ok(draws);
+ var drawDtos = draws.Select(_mappingService.MapToDto);
+ return Ok(drawDtos);
  }
 
  [HttpGet("{id}")]
- public async Task<ActionResult<Draw>> GetDraw(int id)
+ public async Task<ActionResult<DrawDto>> GetDraw(int id)
  {
  var draw = await _drawRepository.GetDrawWithResultsAsync(id);
 
@@ -32,16 +36,18 @@ public class DrawsController : ControllerBase
  return NotFound();
  }
 
- return Ok(draw);
+ return Ok(_mappingService.MapToDto(draw));
  }
 
  [HttpPost]
- public async Task<ActionResult<Draw>> CreateDraw(Draw draw)
+ public async Task<ActionResult<DrawDto>> CreateDraw(CreateDrawDto createDto)
  {
+ var draw = _mappingService.MapToEntity(createDto);
  await _drawRepository.AddAsync(draw);
  await _drawRepository.SaveChangesAsync();
 
- return CreatedAtAction(nameof(GetDraw), new { id = draw.Id }, draw);
+ var drawDto = _mappingService.MapToDto(draw);
+ return CreatedAtAction(nameof(GetDraw), new { id = draw.Id }, drawDto);
  }
 
  [HttpDelete("{id}")]

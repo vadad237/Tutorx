@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using TutorX.Infrastructure.Entities;
 using TutorX.Infrastructure.Repositories;
+using TutorX.Server.Services;
+using TutorX.Shared.DTOs;
 
 namespace TutorX.Server.Controllers;
 
@@ -8,74 +9,75 @@ namespace TutorX.Server.Controllers;
 [Route("api/[controller]")]
 public class ActivitiesController : ControllerBase
 {
- private readonly IActivityRepository _activityRepository;
+    private readonly IActivityRepository _activityRepository;
+    private readonly IMappingService _mappingService;
 
- public ActivitiesController(IActivityRepository activityRepository)
- {
- _activityRepository = activityRepository;
- }
+    public ActivitiesController(IActivityRepository activityRepository, IMappingService mappingService)
+    {
+        _activityRepository = activityRepository;
+        _mappingService = mappingService;
+    }
 
- [HttpGet]
- public async Task<ActionResult<IEnumerable<Activity>>> GetActivities()
- {
- var activities = await _activityRepository.GetActivitiesWithGroupsAsync();
- return Ok(activities);
- }
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ActivityDto>>> GetActivities()
+    {
+        var activities = await _activityRepository.GetActivitiesWithGroupsAsync();
+        var activityDtos = activities.Select(_mappingService.MapToDto);
+        return Ok(activityDtos);
+    }
 
- [HttpGet("{id}")]
- public async Task<ActionResult<Activity>> GetActivity(int id)
- {
- var activity = await _activityRepository.GetByIdAsync(id);
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ActivityDto>> GetActivity(int id)
+    {
+        var activity = await _activityRepository.GetByIdAsync(id);
 
- if (activity == null)
- {
- return NotFound();
- }
+        if (activity == null)
+        {
+            return NotFound();
+        }
 
- return Ok(activity);
- }
+        return Ok(_mappingService.MapToDto(activity));
+    }
 
- [HttpPost]
- public async Task<ActionResult<Activity>> CreateActivity(Activity activity)
- {
- await _activityRepository.AddAsync(activity);
- await _activityRepository.SaveChangesAsync();
+    [HttpPost]
+    public async Task<ActionResult<ActivityDto>> CreateActivity(CreateActivityDto createDto)
+    {
+        var activity = _mappingService.MapToEntity(createDto);
+        await _activityRepository.AddAsync(activity);
+        await _activityRepository.SaveChangesAsync();
 
- return CreatedAtAction(nameof(GetActivity), new { id = activity.Id }, activity);
- }
+        var activityDto = _mappingService.MapToDto(activity);
+        return CreatedAtAction(nameof(GetActivity), new { id = activity.Id }, activityDto);
+    }
 
- [HttpPut("{id}")]
- public async Task<IActionResult> UpdateActivity(int id, Activity activity)
- {
- if (id != activity.Id)
- {
- return BadRequest();
- }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateActivity(int id, UpdateActivityDto updateDto)
+    {
+        var existingActivity = await _activityRepository.GetByIdAsync(id);
+        if (existingActivity == null)
+        {
+            return NotFound();
+        }
 
- var existingActivity = await _activityRepository.GetByIdAsync(id);
- if (existingActivity == null)
- {
- return NotFound();
- }
+        _mappingService.MapToEntity(updateDto, existingActivity);
+        _activityRepository.Update(existingActivity);
+        await _activityRepository.SaveChangesAsync();
 
- _activityRepository.Update(activity);
- await _activityRepository.SaveChangesAsync();
+        return NoContent();
+    }
 
- return NoContent();
- }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteActivity(int id)
+    {
+        var activity = await _activityRepository.GetByIdAsync(id);
+        if (activity == null)
+        {
+            return NotFound();
+        }
 
- [HttpDelete("{id}")]
- public async Task<IActionResult> DeleteActivity(int id)
- {
- var activity = await _activityRepository.GetByIdAsync(id);
- if (activity == null)
- {
- return NotFound();
- }
+        _activityRepository.Remove(activity);
+        await _activityRepository.SaveChangesAsync();
 
- _activityRepository.Remove(activity);
- await _activityRepository.SaveChangesAsync();
-
- return NoContent();
- }
+        return NoContent();
+    }
 }
