@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TutorX.Shared\TutorX.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
