@@ -1,0 +1,6 @@
+@TutorX.Server_HostAddress = http://localhost:5290
+
+GET {{TutorX.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
