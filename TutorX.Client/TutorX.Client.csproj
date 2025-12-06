@@ -13,7 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+    <ProjectReference Include="..\TutorX.Shared\TutorX.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+<ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
 </Project>

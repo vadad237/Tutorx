@@ -17,12 +17,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazorWasm", policy =>
     {
-        policy.WithOrigins("https://localhost:7001", "http://localhost:5001")
-  .AllowAnyHeader()
-          .AllowAnyMethod();
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
-
 // Configure DbContext
 builder.Services.AddDbContext<TutorXDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

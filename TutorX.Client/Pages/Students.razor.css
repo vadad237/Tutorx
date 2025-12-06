@@ -1,0 +1,20 @@
+.table-responsive {
+    margin-top: 1rem;
+}
+
+.modal.show {
+    display: block;
+}
+
+.bi-people-fill::before {
+    content: "??";
+    font-style: normal;
+}
+
+.btn-group-actions {
+    white-space: nowrap;
+}
+
+.alert {
+    margin-top: 1rem;
+}

@@ -5,26 +5,30 @@ namespace TutorX.Server.Services;
 
 public class MappingService : IMappingService
 {
- // Student mappings
+    // Student mappings
     public StudentDto MapToDto(Student student)
     {
- return new StudentDto
-{
+        return new StudentDto
+        {
             Id = student.Id,
-   Name = student.Name,
-    Email = student.Email,
+            Name = student.Name,
+            Email = student.Email,
+            CardNumber = student.CardNumber,
+            Year = student.Year,
             GroupId = student.GroupId,
-   GroupName = student.Group?.Name
-   };
+            GroupName = student.Group?.Name
+        };
     }
 
     public Student MapToEntity(CreateStudentDto dto)
     {
-return new Student
+        return new Student
         {
             Name = dto.Name,
-    Email = dto.Email,
-  GroupId = dto.GroupId
+            Email = dto.Email,
+            CardNumber = dto.CardNumber,
+            Year = dto.Year,
+            GroupId = dto.GroupId
         };
     }
 
@@ -32,6 +36,8 @@ return new Student
     {
         student.Name = dto.Name;
         student.Email = dto.Email;
+        student.CardNumber = dto.CardNumber;
+        student.Year = dto.Year;
         student.GroupId = dto.GroupId;
     }
 
@@ -39,19 +45,19 @@ return new Student
     public StudentGroupDto MapToDto(StudentGroup group)
     {
         return new StudentGroupDto
-  {
-        Id = group.Id,
+        {
+            Id = group.Id,
             Name = group.Name,
             Description = group.Description,
- Students = group.Students?.Select(MapToDto).ToList() ?? new List<StudentDto>()
-     };
+            Students = group.Students?.Select(MapToDto).ToList() ?? new List<StudentDto>()
+        };
     }
 
     public StudentGroup MapToEntity(CreateStudentGroupDto dto)
     {
         return new StudentGroup
         {
- Name = dto.Name,
+            Name = dto.Name,
             Description = dto.Description
         };
     }
@@ -64,23 +70,23 @@ return new Student
 
     // Activity mappings
     public ActivityDto MapToDto(Activity activity)
- {
+    {
         return new ActivityDto
         {
-        Id = activity.Id,
-     Name = activity.Name,
- Description = activity.Description,
-GroupId = activity.GroupId,
-    GroupName = activity.Group?.Name
+            Id = activity.Id,
+            Name = activity.Name,
+            Description = activity.Description,
+            GroupId = activity.GroupId,
+            GroupName = activity.Group?.Name
         };
     }
 
     public Activity MapToEntity(CreateActivityDto dto)
     {
-   return new Activity
+        return new Activity
         {
- Name = dto.Name,
-      Description = dto.Description,
+            Name = dto.Name,
+            Description = dto.Description,
             GroupId = dto.GroupId
         };
     }
@@ -89,7 +95,7 @@ GroupId = activity.GroupId,
     {
         activity.Name = dto.Name;
         activity.Description = dto.Description;
-      activity.GroupId = dto.GroupId;
+        activity.GroupId = dto.GroupId;
     }
 
     // ActivityAssignment mappings
@@ -97,22 +103,22 @@ GroupId = activity.GroupId,
     {
         return new ActivityAssignmentDto
         {
-      Id = assignment.Id,
-        ActivityId = assignment.ActivityId,
+            Id = assignment.Id,
+            ActivityId = assignment.ActivityId,
             ActivityName = assignment.Activity?.Name,
-     StudentId = assignment.StudentId,
+            StudentId = assignment.StudentId,
             StudentName = assignment.Student?.Name,
-IsCompleted = assignment.IsCompleted
+            IsCompleted = assignment.IsCompleted
         };
     }
 
     public ActivityAssignment MapToEntity(CreateActivityAssignmentDto dto)
     {
-    return new ActivityAssignment
+        return new ActivityAssignment
         {
-   ActivityId = dto.ActivityId,
+            ActivityId = dto.ActivityId,
             StudentId = dto.StudentId,
-    IsCompleted = dto.IsCompleted
+            IsCompleted = dto.IsCompleted
         };
     }
 
@@ -126,27 +132,27 @@ IsCompleted = assignment.IsCompleted
     // Draw mappings
     public DrawDto MapToDto(Draw draw)
     {
-      return new DrawDto
-{
-       Id = draw.Id,
-    Name = draw.Name,
-      ActivityId = draw.ActivityId,
-   ActivityName = draw.Activity?.Name,
-    GroupId = draw.GroupId,
-  GroupName = draw.Group?.Name,
-      CreatedAt = draw.CreatedAt,
-  Results = draw.Results?.Select(MapToDto).ToList() ?? new List<DrawResultDto>()
+        return new DrawDto
+        {
+            Id = draw.Id,
+            Name = draw.Name,
+            ActivityId = draw.ActivityId,
+            ActivityName = draw.Activity?.Name,
+            GroupId = draw.GroupId,
+            GroupName = draw.Group?.Name,
+            CreatedAt = draw.CreatedAt,
+            Results = draw.Results?.Select(MapToDto).ToList() ?? new List<DrawResultDto>()
         };
     }
 
     public Draw MapToEntity(CreateDrawDto dto)
-  {
+    {
         return new Draw
         {
             Name = dto.Name,
-     ActivityId = dto.ActivityId,
+            ActivityId = dto.ActivityId,
             GroupId = dto.GroupId,
-         CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow
         };
     }
 
@@ -155,11 +161,11 @@ IsCompleted = assignment.IsCompleted
     {
         return new DrawResultDto
         {
-       Id = result.Id,
-   DrawId = result.DrawId,
-   DrawName = result.Draw?.Name,
-   StudentId = result.StudentId,
-StudentName = result.Student?.Name
-      };
+            Id = result.Id,
+            DrawId = result.DrawId,
+            DrawName = result.Draw?.Name,
+            StudentId = result.StudentId,
+            StudentName = result.Student?.Name
+        };
     }
 }
