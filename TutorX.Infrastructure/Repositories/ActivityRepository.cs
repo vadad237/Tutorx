@@ -11,7 +11,7 @@ public class ActivityRepository : Repository<Activity>, IActivityRepository
 
     public async Task<IEnumerable<Activity>> GetActivitiesWithGroupsAsync()
     {
-        return await _context.Activities.Include(a => a.Group).ToListAsync();
+        return await _context.Activities.Include(a => a.Group).Include(a => a.Students).ToListAsync();
     }
 
     public async Task<Activity?> GetActivityWithAssignmentsAsync(int id)

@@ -77,7 +77,9 @@ public class MappingService : IMappingService
             Name = activity.Name,
             Description = activity.Description,
             GroupId = activity.GroupId,
-            GroupName = activity.Group?.Name
+            GroupName = activity.Group?.Name,
+            StudentIds = activity.Students?.Select(s => s.Id).ToList() ?? new List<int>(),
+            StudentNames = activity.Students?.Select(s => s.Name).ToList() ?? new List<string>()
         };
     }
 
@@ -88,6 +90,7 @@ public class MappingService : IMappingService
             Name = dto.Name,
             Description = dto.Description,
             GroupId = dto.GroupId
+            // Students will be set separately in the controller
         };
     }
 
@@ -96,6 +99,7 @@ public class MappingService : IMappingService
         activity.Name = dto.Name;
         activity.Description = dto.Description;
         activity.GroupId = dto.GroupId;
+        // Students will be updated separately in the controller
     }
 
     // ActivityAssignment mappings

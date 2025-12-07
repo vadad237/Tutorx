@@ -27,5 +27,15 @@ public class TutorXDbContext : DbContext
          j => j.HasOne<StudentGroup>().WithMany().HasForeignKey("GroupId"),
    j => j.HasOne<Student>().WithMany().HasForeignKey("StudentId")
             );
+
+     // Configure many-to-many relationship between Activity and Student
+      modelBuilder.Entity<Activity>()
+ .HasMany(a => a.Students)
+        .WithMany()
+   .UsingEntity<Dictionary<string, object>>(
+ "ActivityStudentMembership",
+           j => j.HasOne<Student>().WithMany().HasForeignKey("StudentId"),
+         j => j.HasOne<Activity>().WithMany().HasForeignKey("ActivityId")
+);
     }
 }
