@@ -5,16 +5,16 @@
 @inject IStudentService StudentService
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Student Groups</PageTitle>
+<PageTitle>Študentské skupiny</PageTitle>
 
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col">
-            <h1>Student Groups</h1>
+            <h1>Študentské skupiny</h1>
         </div>
         <div class="col-auto">
             <button class="btn btn-primary" @onclick="ShowAddGroupModal">
-                <i class="bi bi-plus-circle"></i> Add Group
+                <i class="bi bi-plus-circle"></i> Prida? skupinu
             </button>
         </div>
     </div>
@@ -23,7 +23,7 @@
     {
         <div class="text-center">
             <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">Na?ítava sa...</span>
             </div>
         </div>
     }
@@ -54,7 +54,7 @@
                             <div class="card-body">
                                 <h5 class="card-title">@group.Name</h5>
                                 <p class="card-text text-muted">
-                                    <i class="bi bi-people-fill"></i> @group.Students.Count student@(group.Students.Count != 1 ? "s" : "")
+                                    <i class="bi bi-people-fill"></i> @group.Students.Count študent@(group.Students.Count != 1 ? "i" : "")
                                 </p>
                                 @if (!string.IsNullOrWhiteSpace(group.Description))
                                 {
@@ -62,10 +62,10 @@
                                 }
                                 <div class="card-actions" @onclick:stopPropagation="true">
                                     <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => ShowEditGroupModal(group)">
-                                        <i class="bi bi-pencil">Edit</i>
+                                        <i class="bi bi-pencil">Upravi?</i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteGroup(group.Id)">
-                                        <i class="bi bi-trash">Delete</i>
+                                        <i class="bi bi-trash">Vymaza?</i>
                                     </button>
                                 </div>
                             </div>
@@ -77,7 +77,7 @@
             {
                 <div class="col-12">
                     <div class="alert alert-info">
-                        No groups found. Click "Add Group" to create your first group.
+                        Nenašli sa žiadne skupiny. Kliknite na "Prida? skupinu" pre vytvorenie prvej skupiny.
                     </div>
                 </div>
             }
@@ -95,13 +95,13 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">@group.Name - Students</h5>
+                        <h5 class="modal-title">@group.Name - Študenti</h5>
                         <button type="button" class="btn-close" @onclick="CloseGroupDetails"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
                             <button class="btn btn-sm btn-success" @onclick="() => ShowAddStudentToGroupModal(group.Id)">
-                                <i class="bi bi-person-plus"></i> Add Student
+                                <i class="bi bi-person-plus"></i> Prida? študenta
                             </button>
                         </div>
                         @if (group.Students.Any())
@@ -116,7 +116,7 @@
                                             <small class="text-muted">@student.Email</small>
                                         </div>
                                         <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveStudentFromGroup(group.Id, student.Id)">
-                                            <i class="bi bi-x-circle"></i> Remove
+                                            <i class="bi bi-x-circle"></i> Odstráni?
                                         </button>
                                     </div>
                                 }
@@ -124,7 +124,7 @@
                         }
                         else
                         {
-                            <p class="text-muted">No students in this group yet.</p>
+                            <p class="text-muted">V tejto skupine zatia? nie sú žiadni študenti.</p>
                         }
                     </div>
                 </div>
@@ -140,40 +140,40 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">@(isEditingGroup ? "Edit Group" : "Add Group")</h5>
+                    <h5 class="modal-title">@(isEditingGroup ? "Upravi? skupinu" : "Prida? skupinu")</h5>
                     <button type="button" class="btn-close" @onclick="CloseGroupModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <label class="form-label">Názov <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @(string.IsNullOrWhiteSpace(groupName) && showValidation ? "is-invalid" : "")" @bind="groupName" />
                         @if (string.IsNullOrWhiteSpace(groupName) && showValidation)
                         {
-                            <div class="invalid-feedback">Name is required</div>
+                            <div class="invalid-feedback">Názov je povinný</div>
                         }
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description (optional)</label>
+                        <label class="form-label">Popis (volite?né)</label>
                         <textarea class="form-control" rows="3" @bind="groupDescription"></textarea>
                     </div>
                     @if (!isEditingGroup)
                     {
                         <div class="mb-3">
-                            <label class="form-label">Assign Students (optional)</label>
+                            <label class="form-label">Priradi? študentov (volite?né)</label>
                             <select multiple class="form-select" size="5" @onchange="OnStudentSelectionChanged">
                                 @foreach (var student in availableStudents)
                                 {
                                     <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">@student.Name</option>
                                 }
                             </select>
-                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple students</div>
+                            <div class="form-text">Podržte Ctrl (Cmd na Mac) pre výber viacerých študentov</div>
                         </div>
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseGroupModal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseGroupModal">Zruši?</button>
                     <button type="button" class="btn btn-primary" @onclick="SaveGroup">
-                        @(isEditingGroup ? "Update" : "Create")
+                        @(isEditingGroup ? "Aktualizova?" : "Vytvori?")
                     </button>
                 </div>
             </div>
@@ -188,14 +188,14 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Student to Group</h5>
+                    <h5 class="modal-title">Prida? študenta do skupiny</h5>
                     <button type="button" class="btn-close" @onclick="CloseAddStudentModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Select Student</label>
+                        <label class="form-label">Vyberte študenta</label>
                         <select class="form-select" @bind="selectedStudentIdToAdd">
-                            <option value="">-- Select a student --</option>
+                            <option value="">-- Vyberte študenta --</option>
                             @foreach (var student in GetAvailableStudentsForGroup(currentGroupIdForAddingStudent))
                             {
                                 <option value="@student.Id">@student.Name (@student.Email)</option>
@@ -204,9 +204,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseAddStudentModal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseAddStudentModal">Zruši?</button>
                     <button type="button" class="btn btn-primary" @onclick="AddStudentToGroup" disabled="@(selectedStudentIdToAdd == 0)">
-                        Add
+                        Prida?
                     </button>
                 </div>
             </div>

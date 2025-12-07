@@ -5,19 +5,19 @@
 @inject IStudentService StudentService
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Students</PageTitle>
+<PageTitle>Študenti</PageTitle>
 
 <div class="container-fluid">
     <div class="row mb-3">
         <div class="col">
-            <h1>Students</h1>
+            <h1>Študenti</h1>
         </div>
         <div class="col-auto">
             <button class="btn btn-success me-2" @onclick="ShowImportModal">
-                <i class="bi bi-file-earmark-excel"></i> Import Excel
+                <i class="bi bi-file-earmark-excel"></i> Importovať Excel
             </button>
             <button class="btn btn-primary" @onclick="ShowAddModal">
-                <i class="bi bi-plus-circle"></i> Add Student
+                <i class="bi bi-plus-circle"></i> Pridať študenta
             </button>
         </div>
     </div>
@@ -26,7 +26,7 @@
     {
         <div class="text-center">
             <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">Načítava sa...</span>
             </div>
         </div>
     }
@@ -52,12 +52,12 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Name</th>
+                        <th>Meno</th>
                         <th>Email</th>
-                        <th>Card Number</th>
-                        <th>Year</th>
-                        <th>Group</th>
-                        <th>Actions</th>
+                        <th>Číslo karty</th>
+                        <th>Ročník</th>
+                        <th>Skupina</th>
+                        <th>Akcie</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,13 +71,13 @@
                                 <td>@student.Email</td>
                                 <td>@(student.CardNumber ?? "-")</td>
                                 <td>@(student.Year?.ToString() ?? "-")</td>
-                                <td>@(student.GroupNames.Any() ? string.Join(", ", student.GroupNames) : "No Groups")</td>
+                                <td>@(student.GroupNames.Any() ? string.Join(", ", student.GroupNames) : "Žiadne skupiny")</td>
                                 <td>
                                     <button class="btn btn-sm btn-warning me-1" @onclick="() => ShowEditModal(student)">
-                                        <i class="bi bi-pencil"></i> Edit
+                                        <i class="bi bi-pencil"></i> Upraviť
                                     </button>
                                     <button class="btn btn-sm btn-danger" @onclick="() => DeleteStudent(student.Id)">
-                                        <i class="bi bi-trash"></i> Delete
+                                        <i class="bi bi-trash"></i> Vymazať
                                     </button>
                                 </td>
                             </tr>
@@ -86,7 +86,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="text-center">No students found</td>
+                            <td colspan="7" class="text-center">Nenašli sa žiadni študenti</td>
                         </tr>
                     }
                 </tbody>
@@ -102,22 +102,22 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Import Students from Excel</h5>
+                    <h5 class="modal-title">Importovať študentov z Excelu</h5>
                     <button type="button" class="btn-close" @onclick="CloseImportModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Select Excel File</label>
+                        <label class="form-label">Vyberte Excel súbor</label>
                         <InputFile class="form-control" OnChange="HandleFileSelection" accept=".xlsx,.xls" />
                         <div class="form-text">
-                            Excel file should contain columns: Meno (name), Priezvisko (surname), Číslo karty (card number), Ročník (year)
+                            Excel súbor by mal obsahovať stĺpce: Meno, Priezvisko, Číslo karty, Ročník
                         </div>
                     </div>
                     @if (importProgress)
                     {
                         <div class="text-center">
                             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                            <span>Importing students...</span>
+                            <span>Importujú sa študenti...</span>
                         </div>
                     }
                     @if (importResult != null)
@@ -125,11 +125,11 @@
                         <div class="alert @(importResult.Success ? "alert-success" : "alert-warning")" role="alert">
                             <strong>@importResult.Message</strong>
                             <br />
-                            Imported: @importResult.ImportedCount
+                            Importovaných: @importResult.ImportedCount
                             @if (importResult.FailedCount > 0)
                             {
                                 <br />
-                                <span>Failed: @importResult.FailedCount</span>
+                                <span>Neúspešných: @importResult.FailedCount</span>
                             }
                             @if (importResult.Errors.Any())
                             {
@@ -145,9 +145,9 @@
                     }
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseImportModal">Close</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseImportModal">Zavrieť</button>
                     <button type="button" class="btn btn-primary" @onclick="ImportStudents" disabled="@(selectedFile == null || importProgress)">
-                        <i class="bi bi-upload"></i> Import
+                        <i class="bi bi-upload"></i> Importovať
                     </button>
                 </div>
             </div>
@@ -162,12 +162,12 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">@(isEditing ? "Edit Student" : "Add Student")</h5>
+                    <h5 class="modal-title">@(isEditing ? "Upraviť študenta" : "Pridať študenta")</h5>
                     <button type="button" class="btn-close" @onclick="CloseModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Name</label>
+                        <label class="form-label">Meno</label>
                         <input type="text" class="form-control" @bind="studentName" />
                     </div>
                     <div class="mb-3">
@@ -175,22 +175,22 @@
                         <input type="email" class="form-control" @bind="studentEmail" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Card Number (optional)</label>
+                        <label class="form-label">Číslo karty (voliteľné)</label>
                         <input type="text" class="form-control" @bind="studentCardNumber" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Year (optional)</label>
+                        <label class="form-label">Ročník (voliteľné)</label>
                         <input type="number" class="form-control" @bind="studentYear" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Group ID (optional)</label>
+                        <label class="form-label">ID skupiny (voliteľné)</label>
                         <input type="number" class="form-control" @bind="studentGroupId" />
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Zrušiť</button>
                     <button type="button" class="btn btn-primary" @onclick="SaveStudent">
-                        @(isEditing ? "Update" : "Create")
+                        @(isEditing ? "Aktualizovať" : "Vytvoriť")
                     </button>
                 </div>
             </div>

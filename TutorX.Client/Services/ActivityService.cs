@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using TutorX.Shared.DTOs;
 
 namespace TutorX.Client.Services;
@@ -58,7 +59,25 @@ public class ActivityService : IActivityService
     public async Task DeleteActivityAsync(int id)
     {
         var response = await _httpClient.DeleteAsync($"api/activities/{id}");
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                // Try to parse the error message
+                try
+                {
+                    var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                    throw new HttpRequestException($"BadRequest: {errorResponse?.Message ?? errorContent}");
+                }
+                catch (JsonException)
+                {
+                    throw new HttpRequestException($"BadRequest: {errorContent}");
+                }
+            }
+            throw new HttpRequestException($"Error: {response.StatusCode} - {errorContent}");
+        }
     }
 
     public async Task AddStudentToActivityAsync(int activityId, int studentId)
@@ -78,4 +97,10 @@ public class ActivityService : IActivityService
         var response = await _httpClient.PostAsJsonAsync($"api/activities/{activityId}/students/bulk", studentIds);
         response.EnsureSuccessStatusCode();
     }
+}
+
+// Helper class for error responses
+public class ErrorResponse
+{
+    public string? Message { get; set; }
 }

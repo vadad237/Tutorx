@@ -101,12 +101,45 @@ public class ActivitiesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteActivity(int id)
     {
-        var activity = await _activityRepository.GetByIdAsync(id);
+        // Load activity with all related entities
+        var activity = await _context.Activities
+            .Include(a => a.Students)
+            .Include(a => a.Assignments)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
         if (activity == null)
         {
             return NotFound();
         }
 
+        // Delete all associated draws and their results
+        var associatedDraws = await _context.Draws
+            .Include(d => d.Results)
+            .Where(d => d.ActivityId == id)
+            .ToListAsync();
+
+        if (associatedDraws.Any())
+        {
+            // Remove all draw results first
+            foreach (var draw in associatedDraws)
+            {
+                _context.DrawResults.RemoveRange(draw.Results);
+            }
+
+            // Remove all draws
+            _context.Draws.RemoveRange(associatedDraws);
+        }
+
+        // Clear the many-to-many relationship with students
+        activity.Students.Clear();
+
+        // Remove activity assignments if any
+        if (activity.Assignments.Any())
+        {
+            _context.ActivityAssignments.RemoveRange(activity.Assignments);
+        }
+
+        // Now remove the activity
         _activityRepository.Remove(activity);
         await _activityRepository.SaveChangesAsync();
 

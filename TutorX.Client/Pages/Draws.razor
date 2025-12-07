@@ -6,16 +6,16 @@
 @inject IStudentService StudentService
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Random Selection (Draws)</PageTitle>
+<PageTitle>Náhodný výber (Žrebovania)</PageTitle>
 
 <div class="container-fluid">
   <div class="row mb-3">
  <div class="col">
-   <h1>Random Selection (Draws)</h1>
+   <h1>Náhodný výber (Žrebovania)</h1>
         </div>
    <div class="col-auto">
      <button class="btn btn-primary" @onclick="ShowAddDrawModal">
-     <i class="bi bi-plus-circle"></i> New Draw
+   <i class="bi bi-plus-circle"></i> Nové žrebovanie
      </button>
    </div>
     </div>
@@ -24,13 +24,13 @@
   {
 <div class="text-center">
        <div class="spinner-border" role="status">
-         <span class="visually-hidden">Loading...</span>
-   </div>
+         <span class="visually-hidden">Na?ítava sa...</span>
+</div>
   </div>
     }
   else if (errorMessage != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
 @errorMessage
    <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
      </div>
@@ -45,37 +45,37 @@
 
     @if (!loading)
     {
-        <div class="row">
+    <div class="row">
  @if (draws.Any())
   {
-   @foreach (var draw in draws)
+ @foreach (var draw in draws)
    {
     <div class="col-md-6 col-lg-4 mb-4">
-      <div class="card draw-card" @onclick="() => ShowDrawDetails(draw.Id)">
+ <div class="card draw-card" @onclick="() => ShowDrawDetails(draw.Id)">
   <div class="card-body">
         <h5 class="card-title">@draw.Name</h5>
-         <div class="card-info">
+     <div class="card-info">
        <p class="card-text text-muted mb-2">
    <i class="bi bi-calendar"></i>
- <span class="info-label">Date:</span>
-      @draw.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+ <span class="info-label">Dátum:</span>
+      @draw.CreatedAt.ToString("dd. MM. yyyy HH:mm")
         </p>
-      <p class="card-text text-muted mb-2">
+  <p class="card-text text-muted mb-2">
    <i class="bi bi-clipboard-check"></i>
-    <span class="info-label">Activity:</span>
-    @(draw.ActivityName ?? "Not specified")
+    <span class="info-label">Aktivita:</span>
+    @(draw.ActivityName ?? "Nešpecifikované")
    </p>
      <p class="card-text text-muted mb-2">
      <i class="bi bi-people-fill"></i>
-    <span class="info-label">Selected:</span>
- @draw.Results.Count student@(draw.Results.Count != 1 ? "s" : "")
+    <span class="info-label">Vybraní:</span>
+ @draw.Results.Count @(draw.Results.Count == 1 ? "študent" : draw.Results.Count < 5 ? "študenti" : "študentov")
 </p>
    </div>
     <div class="card-actions" @onclick:stopPropagation="true">
       <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteDraw(draw.Id)">
-     <i class="bi bi-trash"></i> Delete
+     <i class="bi bi-trash"></i> Vymaza?
    </button>
-    </div>
+  </div>
    </div>
        </div>
      </div>
@@ -85,7 +85,7 @@
 {
  <div class="col-12">
      <div class="alert alert-info">
-        No draws found. Click "New Draw" to create your first random selection.
+ Nenašli sa žiadne žrebovania. Kliknite na "Nové žrebovanie" pre vytvorenie prvého náhodného výberu.
     </div>
 </div>
          }
@@ -99,39 +99,39 @@
     var draw = draws.FirstOrDefault(d => d.Id == expandedDrawId.Value);
     if (draw != null)
   {
-      <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
    <div class="modal-dialog modal-lg">
           <div class="modal-content">
     <div class="modal-header">
-   <h5 class="modal-title">@draw.Name - Selected Students</h5>
+   <h5 class="modal-title">@draw.Name - Vybraní študenti</h5>
         <button type="button" class="btn-close" @onclick="CloseDrawDetails"></button>
   </div>
 <div class="modal-body">
-      <div class="mb-3">
-   <p><strong>Activity:</strong> @(draw.ActivityName ?? "Not specified")</p>
-       <p><strong>Date:</strong> @draw.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</p>
+ <div class="mb-3">
+   <p><strong>Aktivita:</strong> @(draw.ActivityName ?? "Nešpecifikované")</p>
+       <p><strong>Dátum:</strong> @draw.CreatedAt.ToString("dd. MMMM yyyy HH:mm")</p>
    </div>
    @if (draw.Results.Any())
   {
-      <h6>Randomly Selected Students:</h6>
+      <h6>Náhodne vybraní študenti:</h6>
       <div class="list-group">
       @foreach (var result in draw.Results)
   {
-         <div class="list-group-item">
-          <i class="bi bi-person-check"></i> <strong>@result.StudentName</strong>
+      <div class="list-group-item">
+<i class="bi bi-person-check"></i> <strong>@result.StudentName</strong>
            </div>
   }
        </div>
     }
-       else
-    {
-     <p class="text-muted">No students were selected.</p>
+else
+ {
+     <p class="text-muted">Neboli vybraní žiadni študenti.</p>
     }
   </div>
-    </div>
+  </div>
       </div>
   </div>
-    }
+ }
 }
 
 <!-- Add Draw Modal -->
@@ -141,76 +141,76 @@
         <div class="modal-dialog modal-lg">
   <div class="modal-content">
  <div class="modal-header">
-  <h5 class="modal-title">Create New Draw</h5>
+  <h5 class="modal-title">Vytvori? nové žrebovanie</h5>
      <button type="button" class="btn-close" @onclick="CloseDrawModal"></button>
 </div>
 <div class="modal-body">
       <div class="mb-3">
-        <label class="form-label">Name <span class="text-danger">*</span></label>
+        <label class="form-label">Názov <span class="text-danger">*</span></label>
     <input type="text" class="form-control @(string.IsNullOrWhiteSpace(drawName) && showValidation ? "is-invalid" : "")" @bind="drawName" />
    @if (string.IsNullOrWhiteSpace(drawName) && showValidation)
        {
-   <div class="invalid-feedback">Name is required</div>
+   <div class="invalid-feedback">Názov je povinný</div>
  }
    </div>
        <div class="mb-3">
-        <label class="form-label">Activity <span class="text-danger">*</span></label>
+        <label class="form-label">Aktivita <span class="text-danger">*</span></label>
       <select class="form-select @(!selectedActivityId.HasValue && showValidation ? "is-invalid" : "")" @bind="selectedActivityId" @bind:after="OnActivitySelected">
-     <option value="">-- Select an activity --</option>
+     <option value="">-- Vyberte aktivitu --</option>
     @foreach (var activity in availableActivities)
     {
       <option value="@activity.Id">@activity.Name</option>
     }
-       </select>
+  </select>
        @if (!selectedActivityId.HasValue && showValidation)
   {
-   <div class="invalid-feedback">Activity is required</div>
-       }
+   <div class="invalid-feedback">Aktivita je povinná</div>
+  }
    </div>
   @if (selectedActivityId.HasValue)
-        {
+    {
       var availableForDraw = GetStudentsAvailableForDraw();
       var alreadyInActivity = GetStudentsAlreadyInActivity();
   
            <div class="mb-3">
-   <label class="form-label">Students to Select From <span class="text-danger">*</span></label>
+   <label class="form-label">Študenti na výber <span class="text-danger">*</span></label>
     <select multiple class="form-select" size="10" @onchange="OnStudentSelectionChanged">
-         @foreach (var student in availableForDraw.OrderBy(s => s.Name))
+    @foreach (var student in availableForDraw.OrderBy(s => s.Name))
   {
      <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">
-       @student.Name
+     @student.Name
      </option>
     }
           </select>
  <div class="form-text">
-         Hold Ctrl (Cmd on Mac) to select multiple students.<br/>
-    <strong>Only showing students NOT already assigned to this activity.</strong><br/>
+         Podržte Ctrl (Cmd na Mac) pre výber viacerých študentov.<br/>
+    <strong>Zobrazujú sa iba študenti, ktorí NIE SÚ priradení k tejto aktivite.</strong><br/>
      @if (alreadyInActivity.Any())
   {
-        <span class="text-info">
-    @alreadyInActivity.Count student@(alreadyInActivity.Count != 1 ? "s are" : " is") already in this activity and excluded from the draw.
+    <span class="text-info">
+    @alreadyInActivity.Count @(alreadyInActivity.Count == 1 ? "študent je" : alreadyInActivity.Count < 5 ? "študenti sú" : "študentov je") už v tejto aktivite a @(alreadyInActivity.Count == 1 ? "je vylú?ený" : "sú vylú?ení") zo žrebovania.
       </span>
     }
-         </div>
+      </div>
   @if (selectedStudentIds.Count == 0 && showValidation)
-       {
-         <div class="text-danger mt-1" style="font-size: 0.875rem;">At least one student must be selected</div>
-           }
+    {
+         <div class="text-danger mt-1" style="font-size: 0.875rem;">Musí by? vybratý aspo? jeden študent</div>
+    }
     </div>
    <div class="mb-3">
-     <label class="form-label">Number of Students to Randomly Select <span class="text-danger">*</span></label>
+     <label class="form-label">Po?et študentov na náhodný výber <span class="text-danger">*</span></label>
       <input type="number" class="form-control" min="1" max="@selectedStudentIds.Count" @bind="numberToSelect" />
-       <div class="form-text">How many students to randomly select from the pool above (max: @selectedStudentIds.Count)</div>
+       <div class="form-text">Ko?ko študentov sa má náhodne vybra? zo zoznamu vyššie (maximum: @selectedStudentIds.Count)</div>
    </div>
       <div class="alert alert-info">
-          <i class="bi bi-info-circle"></i> <strong>Note:</strong> Selected students will be automatically added to the activity.
+          <i class="bi bi-info-circle"></i> <strong>Poznámka:</strong> Vybraní študenti budú automaticky pridaní do aktivity.
    </div>
       }
-         </div>
+ </div>
       <div class="modal-footer">
- <button type="button" class="btn btn-secondary" @onclick="CloseDrawModal">Cancel</button>
+ <button type="button" class="btn btn-secondary" @onclick="CloseDrawModal">Zruši?</button>
           <button type="button" class="btn btn-primary" @onclick="CreateDraw">
-   <i class="bi bi-shuffle"></i> Run Draw
+   <i class="bi bi-shuffle"></i> Spusti? žrebovanie
     </button>
      </div>
          </div>
@@ -245,14 +245,14 @@
   try
   {
       loading = true;
-       errorMessage = null;
+  errorMessage = null;
     draws = await DrawService.GetDrawsAsync();
    availableActivities = await ActivityService.GetActivitiesAsync();
   availableStudents = await StudentService.GetStudentsAsync();
     }
-   catch (Exception ex)
+ catch (Exception ex)
     {
-     errorMessage = $"Error loading data: {ex.Message}";
+   errorMessage = $"Chyba pri na?ítavaní dát: {ex.Message}";
   }
      finally
      {
@@ -282,7 +282,7 @@ selectedActivityId = null;
 
     private void CloseDrawModal()
     {
-      showDrawModal = false;
+ showDrawModal = false;
     }
 
     private void OnActivitySelected()
@@ -304,13 +304,13 @@ selectedActivityId = null;
  return availableStudents.Where(s => activityStudentIds.Contains(s.Id)).ToList();
     }
 
-    private List<StudentDto> GetStudentsAvailableForDraw()
+ private List<StudentDto> GetStudentsAvailableForDraw()
   {
         if (!selectedActivityId.HasValue)
             return new List<StudentDto>();
 
    var activity = availableActivities.FirstOrDefault(a => a.Id == selectedActivityId.Value);
-        if (activity == null)
+    if (activity == null)
 return availableStudents;
 
   var activityStudentIds = activity.StudentIds.ToHashSet();
@@ -328,13 +328,13 @@ private async Task CreateDraw()
 
  if (numberToSelect < 1 || numberToSelect > selectedStudentIds.Count)
   {
-   errorMessage = $"Number to select must be between 1 and {selectedStudentIds.Count}";
+   errorMessage = $"Po?et študentov na výber musí by? medzi 1 a {selectedStudentIds.Count}";
   return;
         }
 
   try
   {
-       var createDto = new CreateDrawDto
+  var createDto = new CreateDrawDto
     {
    Name = drawName,
    ActivityId = selectedActivityId,
@@ -342,7 +342,7 @@ private async Task CreateDraw()
            NumberToSelect = numberToSelect
    };
 
-    var createdDraw = await DrawService.CreateDrawAsync(createDto);
+  var createdDraw = await DrawService.CreateDrawAsync(createDto);
         
      // Add the selected students to the activity
         if (createdDraw.Results.Any() && selectedActivityId.HasValue)
@@ -351,29 +351,29 @@ private async Task CreateDraw()
   await ActivityService.AddStudentsToActivityAsync(selectedActivityId.Value, selectedStudentIdsFromDraw);
  }
 
-  successMessage = $"Draw completed! {createdDraw.Results.Count} student(s) randomly selected and added to the activity.";
+  successMessage = $"Žrebovanie dokon?ené! {createdDraw.Results.Count} {(createdDraw.Results.Count == 1 ? "študent bol náhodne vybraný" : createdDraw.Results.Count < 5 ? "študenti boli náhodne vybratí" : "študentov bolo náhodne vybratých")} a {(createdDraw.Results.Count == 1 ? "pridaný" : "pridaní")} do aktivity.";
   CloseDrawModal();
     await LoadData();
   }
   catch (Exception ex)
   {
-    errorMessage = $"Error creating draw: {ex.Message}";
+    errorMessage = $"Chyba pri vytváraní žrebovania: {ex.Message}";
     }
     }
 
     private async Task DeleteDraw(int id)
     {
-if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this draw?"))
+if (await JSRuntime.InvokeAsync<bool>("confirm", "Naozaj chcete vymaza? toto žrebovanie?"))
   {
       try
  {
   await DrawService.DeleteDrawAsync(id);
-        successMessage = "Draw deleted successfully!";
+        successMessage = "Žrebovanie bolo úspešne vymazané!";
      await LoadData();
 }
      catch (Exception ex)
   {
-    errorMessage = $"Error deleting draw: {ex.Message}";
+ errorMessage = $"Chyba pri mazaní žrebovania: {ex.Message}";
  }
         }
   }
@@ -385,9 +385,9 @@ if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delet
 selectedStudentIds = selectedValues.Select(int.Parse).ToList();
       }
       else if (e.Value is string singleValue && !string.IsNullOrEmpty(singleValue))
-        {
+     {
    selectedStudentIds = new List<int> { int.Parse(singleValue) };
-        }
+  }
  else
       {
  selectedStudentIds = new List<int>();
