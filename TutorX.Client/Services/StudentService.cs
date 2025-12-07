@@ -10,6 +10,7 @@ public interface IStudentService
     Task<StudentDto> CreateStudentAsync(CreateStudentDto student);
     Task UpdateStudentAsync(int id, UpdateStudentDto student);
     Task DeleteStudentAsync(int id);
+    Task<ImportResult> ImportStudentsFromExcelAsync(byte[] fileData);
 }
 
 public class StudentService : IStudentService
@@ -25,19 +26,41 @@ public class StudentService : IStudentService
     {
         try
         {
-            var test = await _httpClient.GetAsync("api/students");
+            var response = await _httpClient.GetAsync("api/students");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<StudentDto>>() ?? new List<StudentDto>();
+            }
+            else
+            {
+                Console.WriteLine($"API returned status code: {response.StatusCode}");
+                return new List<StudentDto>();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Request error: {ex.Message}");
+            return new List<StudentDto>();
         }
         catch (Exception ex)
         {
-            Console.WriteLine();
+            Console.WriteLine($"Error fetching students: {ex.Message}");
+            return new List<StudentDto>();
         }
-
-        return await _httpClient.GetFromJsonAsync<List<StudentDto>>("api/students") ?? new List<StudentDto>();
     }
 
     public async Task<StudentDto?> GetStudentAsync(int id)
     {
-        return await _httpClient.GetFromJsonAsync<StudentDto>($"api/students/{id}");
+        try
+        {
+            return await _httpClient.GetFromJsonAsync<StudentDto>($"api/students/{id}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching student {id}: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<StudentDto> CreateStudentAsync(CreateStudentDto student)
@@ -58,4 +81,25 @@ public class StudentService : IStudentService
         var response = await _httpClient.DeleteAsync($"api/students/{id}");
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<ImportResult> ImportStudentsFromExcelAsync(byte[] fileData)
+    {
+        using var content = new MultipartFormDataContent();
+        content.Add(new ByteArrayContent(fileData), "file", "import.xlsx");
+
+        var response = await _httpClient.PostAsync("api/students/import", content);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<ImportResult>()
+            ?? new ImportResult { Success = false, Message = "No response from server" };
+    }
+}
+
+public class ImportResult
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public int ImportedCount { get; set; }
+    public int FailedCount { get; set; }
+    public List<string> Errors { get; set; } = new();
 }
