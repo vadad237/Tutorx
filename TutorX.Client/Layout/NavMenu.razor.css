@@ -95,15 +95,15 @@ display: flex;
     }
 
     .accordion-button::after {
-      content: '?';
+     content: '?';
         margin-left: auto;
-  font-size: 0.7rem;
-transition: transform 0.2s ease;
+        font-size: 0.7rem;
+        transition: transform 0.2s ease;
     }
 
     .accordion-button.collapsed::after {
         transform: rotate(-90deg);
-  }
+    }
 
 .accordion-collapse {
     overflow: hidden;

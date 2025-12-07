@@ -182,10 +182,6 @@
                         <label class="form-label">Ročník (voliteľné)</label>
                         <input type="number" class="form-control" @bind="studentYear" />
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">ID skupiny (voliteľné)</label>
-                        <input type="number" class="form-control" @bind="studentGroupId" />
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Zrušiť</button>
@@ -218,7 +214,6 @@
     private string studentEmail = "";
     private string? studentCardNumber;
     private int? studentYear;
-    private int? studentGroupId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -251,7 +246,6 @@
         studentEmail = "";
         studentCardNumber = null;
         studentYear = null;
-        studentGroupId = null;
         showModal = true;
     }
 
@@ -263,7 +257,6 @@
         studentEmail = student.Email;
         studentCardNumber = student.CardNumber;
         studentYear = student.Year;
-        studentGroupId = student.GroupIds.FirstOrDefault();
         showModal = true;
     }
 
@@ -284,47 +277,47 @@
                     Email = studentEmail,
                     CardNumber = studentCardNumber,
                     Year = studentYear,
-                    GroupIds = studentGroupId.HasValue ? new List<int> { studentGroupId.Value } : new List<int>()
-                 };
+                    GroupIds = new List<int>()
+               };
                 await StudentService.UpdateStudentAsync(editingStudentId.Value, updateDto);
-                successMessage = "Student updated successfully!";
+                successMessage = "Študent úspešne aktualizovaný!";
             }
             else
-            {
-                var createDto = new CreateStudentDto
-                {
-                    Name = studentName,
-                    Email = studentEmail,
-                    CardNumber = studentCardNumber,
-                    Year = studentYear,
-                    GroupIds = studentGroupId.HasValue ? new List<int> { studentGroupId.Value } : new List<int>()
-                };
-                await StudentService.CreateStudentAsync(createDto);
-                successMessage = "Student created successfully!";
+ {
+          var createDto = new CreateStudentDto
+   {
+   Name = studentName,
+Email = studentEmail,
+        CardNumber = studentCardNumber,
+            Year = studentYear,
+    GroupIds = new List<int>()
+     };
+          await StudentService.CreateStudentAsync(createDto);
+             successMessage = "Študent úspešne vytvorený!";
             }
 
-            CloseModal();
-            await LoadStudents();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error saving student: {ex.Message}";
+ CloseModal();
+     await LoadStudents();
+     }
+  catch (Exception ex)
+ {
+         errorMessage = $"Chyba pri ukladaní študenta: {ex.Message}";
         }
     }
 
     private async Task DeleteStudent(int id)
     {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this student?"))
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Ste si istý, že chcete vymazať tohto študenta?"))
         {
             try
             {
                 await StudentService.DeleteStudentAsync(id);
-                successMessage = "Student deleted successfully!";
+                successMessage = "Študent úspešne vymazaný!";
                 await LoadStudents();
             }
             catch (Exception ex)
             {
-                errorMessage = $"Error deleting student: {ex.Message}";
+                errorMessage = $"Chyba pri mazaní študenta: {ex.Message}";
             }
         }
     }

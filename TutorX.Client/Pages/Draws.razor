@@ -172,38 +172,58 @@ else
       var availableForDraw = GetStudentsAvailableForDraw();
       var alreadyInActivity = GetStudentsAlreadyInActivity();
   
-           <div class="mb-3">
+   <div class="mb-3">
    <label class="form-label">Študenti na výber <span class="text-danger">*</span></label>
-    <select multiple class="form-select" size="10" @onchange="OnStudentSelectionChanged">
+      <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+     <div class="form-check mb-2">
+ <input class="form-check-input" type="checkbox" id="selectAllDrawStudents" 
+          checked="@(selectedStudentIds.Count == availableForDraw.Count && availableForDraw.Any())"
+     @onchange="ToggleSelectAllDrawStudents" />
+          <label class="form-check-label fw-bold" for="selectAllDrawStudents">
+       Vybra? všetkých
+            </label>
+  </div>
+       <hr class="my-2" />
     @foreach (var student in availableForDraw.OrderBy(s => s.Name))
-  {
-     <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">
-     @student.Name
-     </option>
-    }
-          </select>
- <div class="form-text">
-         Podržte Ctrl (Cmd na Mac) pre výber viacerých študentov.<br/>
+    {
+     <div class="form-check">
+       <input class="form-check-input" type="checkbox" 
+      id="drawStudent_@student.Id" 
+         checked="@selectedStudentIds.Contains(student.Id)"
+       @onchange="@((e) => ToggleDrawStudentSelection(student.Id, e))" />
+       <label class="form-check-label" for="drawStudent_@student.Id">
+       @student.Name
+      </label>
+  </div>
+     }
+ @if (!availableForDraw.Any())
+      {
+              <p class="text-muted mb-0">Žiadni dostupní študenti na žrebovanie</p>
+     }
+              </div>
+ <div class="form-text mt-2">
     <strong>Zobrazujú sa iba študenti, ktorí NIE SÚ priradení k tejto aktivite.</strong><br/>
-     @if (alreadyInActivity.Any())
-  {
-    <span class="text-info">
-    @alreadyInActivity.Count @(alreadyInActivity.Count == 1 ? "študent je" : alreadyInActivity.Count < 5 ? "študenti sú" : "študentov je") už v tejto aktivite a @(alreadyInActivity.Count == 1 ? "je vylú?ený" : "sú vylú?ení") zo žrebovania.
-      </span>
-    }
-      </div>
+          Vybratých študentov: @selectedStudentIds.Count
+  @if (alreadyInActivity.Any())
+      {
+           <br />
+  <span class="text-info">
+         @alreadyInActivity.Count @(alreadyInActivity.Count == 1 ? "študent je" : alreadyInActivity.Count < 5 ? "študenti sú" : "študentov je") už v tejto aktivite a @(alreadyInActivity.Count == 1 ? "je vylú?ený" : "sú vylú?ení") zo žrebovania.
+   </span>
+        }
+         </div>
   @if (selectedStudentIds.Count == 0 && showValidation)
     {
-         <div class="text-danger mt-1" style="font-size: 0.875rem;">Musí by? vybratý aspo? jeden študent</div>
+       <div class="text-danger mt-1" style="font-size: 0.875rem;">Musí by? vybratý aspo? jeden študent</div>
     }
-    </div>
+</div>
    <div class="mb-3">
-     <label class="form-label">Po?et študentov na náhodný výber <span class="text-danger">*</span></label>
+<label class="form-label">Po?et študentov na náhodný výber <span class="text-danger">*</span></label>
       <input type="number" class="form-control" min="1" max="@selectedStudentIds.Count" @bind="numberToSelect" />
-       <div class="form-text">Ko?ko študentov sa má náhodne vybra? zo zoznamu vyššie (maximum: @selectedStudentIds.Count)</div>
+     <div class="form-text">Ko?ko študentov sa má náhodne vybra? zo zoznamu vyššie (maximum: @selectedStudentIds.Count)</div>
    </div>
       <div class="alert alert-info">
-          <i class="bi bi-info-circle"></i> <strong>Poznámka:</strong> Vybraní študenti budú automaticky pridaní do aktivity.
+ <i class="bi bi-info-circle"></i> <strong>Poznámka:</strong> Vybraní študenti budú automaticky pridaní do aktivity.
    </div>
       }
  </div>
@@ -389,7 +409,7 @@ selectedStudentIds = selectedValues.Select(int.Parse).ToList();
    selectedStudentIds = new List<int> { int.Parse(singleValue) };
   }
  else
-      {
+ {
  selectedStudentIds = new List<int>();
   }
 
@@ -398,5 +418,55 @@ selectedStudentIds = selectedValues.Select(int.Parse).ToList();
         {
          numberToSelect = selectedStudentIds.Count > 0 ? selectedStudentIds.Count : 1;
     }
+    }
+
+ private void ToggleDrawStudentSelection(int studentId, ChangeEventArgs e)
+    {
+ if (e.Value is bool isChecked)
+        {
+   if (isChecked)
+   {
+   if (!selectedStudentIds.Contains(studentId))
+     {
+   selectedStudentIds.Add(studentId);
+     }
+  }
+  else
+{
+ selectedStudentIds.Remove(studentId);
+   }
+   
+   // Update numberToSelect if it exceeds the new selection count
+   if (numberToSelect > selectedStudentIds.Count)
+   {
+     numberToSelect = selectedStudentIds.Count > 0 ? selectedStudentIds.Count : 1;
+    }
+  }
+ }
+
+    private void ToggleSelectAllDrawStudents(ChangeEventArgs e)
+  {
+   if (e.Value is bool isChecked)
+  {
+   if (isChecked)
+   {
+          var availableForDraw = GetStudentsAvailableForDraw();
+    selectedStudentIds = availableForDraw.Select(s => s.Id).ToList();
+      }
+   else
+    {
+        selectedStudentIds.Clear();
+     }
+   
+   // Update numberToSelect to match the new selection count
+   if (selectedStudentIds.Count > 0)
+ {
+     numberToSelect = selectedStudentIds.Count;
+}
+  else
+        {
+      numberToSelect = 1;
+  }
+  }
     }
 }

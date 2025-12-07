@@ -197,13 +197,34 @@
       {
           <div class="mb-3">
         <label class="form-label">Priradi? študentov (volite?né)</label>
- <select multiple class="form-select" size="5" @onchange="OnStudentSelectionChanged">
-      @foreach (var student in availableStudents)
-   {
- <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">@student.Name</option>
-   }
-     </select>
-<div class="form-text">Podržte Ctrl (Cmd na Mac) pre výber viacerých študentov</div>
+   <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+    <div class="form-check mb-2">
+         <input class="form-check-input" type="checkbox" id="selectAllStudents" 
+    checked="@(selectedStudentIds.Count == availableStudents.Count && availableStudents.Any())"
+ @onchange="ToggleSelectAllStudents" />
+         <label class="form-check-label fw-bold" for="selectAllStudents">
+ Vybra? všetkých
+         </label>
+            </div>
+      <hr class="my-2" />
+  @foreach (var student in availableStudents)
+             {
+           <div class="form-check">
+               <input class="form-check-input" type="checkbox" 
+     id="student_@student.Id" 
+       checked="@selectedStudentIds.Contains(student.Id)"
+            @onchange="@((e) => ToggleStudentSelection(student.Id, e))" />
+            <label class="form-check-label" for="student_@student.Id">
+          @student.Name
+        </label>
+             </div>
+          }
+       @if (!availableStudents.Any())
+  {
+   <p class="text-muted mb-0">Žiadni dostupní študenti</p>
+           }
+              </div>
+  <div class="form-text mt-2">Vybratých študentov: @selectedStudentIds.Count</div>
   </div>
 }
       </div>
@@ -256,25 +277,46 @@ Uloži? termín
    <div class="modal-dialog">
      <div class="modal-content">
  <div class="modal-header">
-      <h5 class="modal-title">Prida? študenta do aktivity</h5>
+      <h5 class="modal-title">Prida? študentov do aktivity</h5>
    <button type="button" class="btn-close" @onclick="CloseAddStudentModal"></button>
     </div>
-         <div class="modal-body">
+     <div class="modal-body">
  <div class="mb-3">
-       <label class="form-label">Vyberte študenta</label>
-    <select class="form-select" @bind="selectedStudentIdToAdd">
-<option value="">-- Vyberte študenta --</option>
-     @foreach (var student in GetAvailableStudentsForActivity(currentActivityIdForAddingStudent))
- {
-         <option value="@student.Id">@student.Name (@student.Email)</option>
-  }
- </select>
-          </div>
+       <label class="form-label">Vyberte študentov</label>
+            <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+     <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="selectAllModalStudents" 
+       checked="@(selectedStudentIdsForModal.Count == GetAvailableStudentsForActivity(currentActivityIdForAddingStudent).Count && GetAvailableStudentsForActivity(currentActivityIdForAddingStudent).Any())"
+  @onchange="ToggleSelectAllModalStudents" />
+  <label class="form-check-label fw-bold" for="selectAllModalStudents">
+          Vybra? všetkých
+         </label>
+                </div>
+         <hr class="my-2" />
+             @foreach (var student in GetAvailableStudentsForActivity(currentActivityIdForAddingStudent))
+        {
+      <div class="form-check">
+                <input class="form-check-input" type="checkbox" 
+             id="modalStudent_@student.Id" 
+  checked="@selectedStudentIdsForModal.Contains(student.Id)"
+      @onchange="@((e) => ToggleModalStudentSelection(student.Id, e))" />
+  <label class="form-check-label" for="modalStudent_@student.Id">
+        @student.Name (@student.Email)
+    </label>
       </div>
-        <div class="modal-footer">
+  }
+          @if (!GetAvailableStudentsForActivity(currentActivityIdForAddingStudent).Any())
+                {
+                 <p class="text-muted mb-0">Všetci študenti sú už priradení k tejto aktivite</p>
+  }
+         </div>
+        <div class="form-text mt-2">Vybratých študentov: @selectedStudentIdsForModal.Count</div>
+ </div>
+      </div>
+ <div class="modal-footer">
 <button type="button" class="btn btn-secondary" @onclick="CloseAddStudentModal">Zruši?</button>
-<button type="button" class="btn btn-primary" @onclick="AddStudentToActivity" disabled="@(selectedStudentIdToAdd ==0)">
- Prida?
+<button type="button" class="btn btn-primary" @onclick="AddStudentsToActivity" disabled="@(selectedStudentIdsForModal.Count == 0)">
+ Prida? (@selectedStudentIdsForModal.Count)
     </button>
   </div>
        </div>
@@ -295,6 +337,7 @@ Uloži? termín
   private bool showAddStudentModal = false;
     private int currentActivityIdForAddingStudent;
   private int selectedStudentIdToAdd;
+    private List<int> selectedStudentIdsForModal = new();
   private bool showSetDateModal = false;
     private int? dateActivityId;
     private string? dateActivityName;
@@ -488,7 +531,8 @@ try
     {
         currentActivityIdForAddingStudent = activityId;
         selectedStudentIdToAdd = 0;
-        showAddStudentModal = true;
+   selectedStudentIdsForModal = new();
+  showAddStudentModal = true;
   }
 
   private void CloseAddStudentModal()
@@ -499,7 +543,7 @@ try
     private async Task AddStudentToActivity()
   {
    if (selectedStudentIdToAdd == 0)
-          return;
+      return;
 
   try
   {
@@ -509,9 +553,35 @@ try
       await LoadData();
      }
   catch (Exception ex)
-        {
+      {
     errorMessage = $"Chyba pri pridávaní študenta k aktivite: {ex.Message}";
    }
+    }
+
+    private async Task AddStudentsToActivity()
+    {
+      if (selectedStudentIdsForModal.Count == 0)
+   return;
+
+        try
+     {
+            // Add each selected student to the activity
+          foreach (var studentId in selectedStudentIdsForModal)
+          {
+            await ActivityService.AddStudentToActivityAsync(currentActivityIdForAddingStudent, studentId);
+            }
+            
+     var count = selectedStudentIdsForModal.Count;
+      successMessage = count == 1 
+           ? "Študent úspešne pridaný k aktivite!" 
+      : $"{count} študentov úspešne pridaných k aktivite!";
+        CloseAddStudentModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+  {
+            errorMessage = $"Chyba pri pridávaní študentov k aktivite: {ex.Message}";
+        }
     }
 
   private async Task RemoveStudentFromActivity(int activityId, int studentId)
@@ -545,7 +615,7 @@ try
   {
   if (e.Value is string[] selectedValues)
     {
-     selectedStudentIds = selectedValues.Select(int.Parse).ToList();
+   selectedStudentIds = selectedValues.Select(int.Parse).ToList();
 }
    else if (e.Value is string singleValue && !string.IsNullOrEmpty(singleValue))
    {
@@ -557,18 +627,85 @@ try
       }
     }
 
+ private void ToggleStudentSelection(int studentId, ChangeEventArgs e)
+    {
+ if (e.Value is bool isChecked)
+        {
+   if (isChecked)
+{
+     if (!selectedStudentIds.Contains(studentId))
+  {
+       selectedStudentIds.Add(studentId);
+       }
+   }
+  else
+     {
+selectedStudentIds.Remove(studentId);
+   }
+   }
+    }
+
+    private void ToggleSelectAllStudents(ChangeEventArgs e)
+    {
+ if (e.Value is bool isChecked)
+     {
+  if (isChecked)
+  {
+   selectedStudentIds = availableStudents.Select(s => s.Id).ToList();
+   }
+   else
+        {
+  selectedStudentIds.Clear();
+     }
+        }
+    }
+
+    private void ToggleModalStudentSelection(int studentId, ChangeEventArgs e)
+    {
+        if (e.Value is bool isChecked)
+        {
+            if (isChecked)
+            {
+        if (!selectedStudentIdsForModal.Contains(studentId))
+          {
+   selectedStudentIdsForModal.Add(studentId);
+            }
+          }
+     else
+  {
+                selectedStudentIdsForModal.Remove(studentId);
+ }
+        }
+    }
+
+    private void ToggleSelectAllModalStudents(ChangeEventArgs e)
+    {
+    if (e.Value is bool isChecked)
+        {
+ if (isChecked)
+            {
+                var availableStudents = GetAvailableStudentsForActivity(currentActivityIdForAddingStudent);
+      selectedStudentIdsForModal = availableStudents.Select(s => s.Id).ToList();
+          }
+       else
+            {
+  selectedStudentIdsForModal.Clear();
+     }
+  }
+    }
+
     private string GetDueDateClass(DateTime dueDate)
     {
     var today = DateTime.Today;
     var daysUntilDue = (dueDate.Date - today).Days;
 
-        if (daysUntilDue < 0)
-       return "text-danger fw-bold"; // Overdue
-   else if (daysUntilDue == 0)
+      if (daysUntilDue < 0)
+     return "text-danger fw-bold"; // Overdue
+ else if (daysUntilDue == 0)
        return "text-warning fw-bold"; // Due today
         else if (daysUntilDue <= 3)
    return "text-warning"; // Due soon
    else
       return "text-success"; // Not urgent
-    }
+ }
 }

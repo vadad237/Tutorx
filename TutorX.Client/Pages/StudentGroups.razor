@@ -160,13 +160,34 @@
                     {
                         <div class="mb-3">
                             <label class="form-label">Priradi? študentov (volite?né)</label>
-                            <select multiple class="form-select" size="5" @onchange="OnStudentSelectionChanged">
+                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="selectAllGroupStudents"
+                                           checked="@(selectedStudentIds.Count == availableStudents.Count && availableStudents.Any())"
+                                           @onchange="ToggleSelectAllGroupStudents" />
+                                    <label class="form-check-label fw-bold" for="selectAllGroupStudents">
+                                        Vybra? všetkých
+                                    </label>
+                                </div>
+                                <hr class="my-2" />
                                 @foreach (var student in availableStudents)
                                 {
-                                    <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">@student.Name</option>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="groupStudent_@student.Id"
+                                               checked="@selectedStudentIds.Contains(student.Id)"
+                                               @onchange="@((e) => ToggleGroupStudentSelection(student.Id, e))" />
+                                        <label class="form-check-label" for="groupStudent_@student.Id">
+                                            @student.Name
+                                        </label>
+                                    </div>
                                 }
-                            </select>
-                            <div class="form-text">Podržte Ctrl (Cmd na Mac) pre výber viacerých študentov</div>
+                                @if (!availableStudents.Any())
+                                {
+                                    <p class="text-muted mb-0">Žiadni dostupní študenti</p>
+                                }
+                            </div>
+                            <div class="form-text mt-2">Vybratých študentov: @selectedStudentIds.Count</div>
                         </div>
                     }
                 </div>
@@ -188,25 +209,46 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Prida? študenta do skupiny</h5>
+                    <h5 class="modal-title">Prida? študentov do skupiny</h5>
                     <button type="button" class="btn-close" @onclick="CloseAddStudentModal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Vyberte študenta</label>
-                        <select class="form-select" @bind="selectedStudentIdToAdd">
-                            <option value="">-- Vyberte študenta --</option>
+                        <label class="form-label">Vyberte študentov</label>
+                        <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="selectAllModalGroupStudents"
+                                       checked="@(selectedStudentIdsForModal.Count == GetAvailableStudentsForGroup(currentGroupIdForAddingStudent).Count && GetAvailableStudentsForGroup(currentGroupIdForAddingStudent).Any())"
+                                       @onchange="ToggleSelectAllModalGroupStudents" />
+                                <label class="form-check-label fw-bold" for="selectAllModalGroupStudents">
+                                    Vybra? všetkých
+                                </label>
+                            </div>
+                            <hr class="my-2" />
                             @foreach (var student in GetAvailableStudentsForGroup(currentGroupIdForAddingStudent))
                             {
-                                <option value="@student.Id">@student.Name (@student.Email)</option>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="modalGroupStudent_@student.Id"
+                                           checked="@selectedStudentIdsForModal.Contains(student.Id)"
+                                           @onchange="@((e) => ToggleModalGroupStudentSelection(student.Id, e))" />
+                                    <label class="form-check-label" for="modalGroupStudent_@student.Id">
+                                        @student.Name (@student.Email)
+                                    </label>
+                                </div>
                             }
-                        </select>
+                            @if (!GetAvailableStudentsForGroup(currentGroupIdForAddingStudent).Any())
+                            {
+                                <p class="text-muted mb-0">Všetci študenti sú už priradení k tejto skupine</p>
+                            }
+                        </div>
+                        <div class="form-text mt-2">Vybratých študentov: @selectedStudentIdsForModal.Count</div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseAddStudentModal">Zruši?</button>
-                    <button type="button" class="btn btn-primary" @onclick="AddStudentToGroup" disabled="@(selectedStudentIdToAdd == 0)">
-                        Prida?
+                    <button type="button" class="btn btn-primary" @onclick="AddStudentsToGroup" disabled="@(selectedStudentIdsForModal.Count == 0)">
+                        Prida? (@selectedStudentIdsForModal.Count)
                     </button>
                 </div>
             </div>
@@ -227,6 +269,7 @@
     private bool showAddStudentModal = false;
     private int currentGroupIdForAddingStudent;
     private int selectedStudentIdToAdd;
+    private List<int> selectedStudentIdsForModal = new();
 
     // Form fields
     private string groupName = "";
@@ -250,7 +293,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading data: {ex.Message}";
+            errorMessage = $"Chyba pri na?ítavaní dát: {ex.Message}";
         }
         finally
         {
@@ -307,142 +350,236 @@
 
         if (string.IsNullOrWhiteSpace(groupName))
         {
-            return;
-        }
+   return;
+      }
 
         try
         {
             if (isEditingGroup && editingGroupId.HasValue)
-            {
-                var updateDto = new UpdateStudentGroupDto
-                {
-                    Name = groupName,
-                    Description = groupDescription
-                };
-                await StudentGroupService.UpdateStudentGroupAsync(editingGroupId.Value, updateDto);
-                successMessage = "Group updated successfully!";
+ {
+  var updateDto = new UpdateStudentGroupDto
+{
+        Name = groupName,
+      Description = groupDescription
+            };
+         await StudentGroupService.UpdateStudentGroupAsync(editingGroupId.Value, updateDto);
+         successMessage = "Skupina úspešne aktualizovaná!";
             }
-            else
-            {
-                var createDto = new CreateStudentGroupDto
+         else
+        {
+       var createDto = new CreateStudentGroupDto
                 {
-                    Name = groupName,
-                    Description = groupDescription
-                };
+     Name = groupName,
+ Description = groupDescription
+   };
                 var createdGroup = await StudentGroupService.CreateStudentGroupAsync(createDto);
 
-                // Add students to the group if any were selected
-                foreach (var studentId in selectedStudentIds)
-                {
-                    try
-                    {
-                        await StudentGroupService.AddStudentToGroupAsync(createdGroup.Id, studentId);
-                    }
-                    catch
-                    {
-                        // Continue if adding a student fails
-                    }
-                }
+          // Add students to the group if any were selected
+          foreach (var studentId in selectedStudentIds)
+  {
+         try
+          {
+          await StudentGroupService.AddStudentToGroupAsync(createdGroup.Id, studentId);
+        }
+     catch
+               {
+                 // Continue if adding a student fails
+       }
+       }
 
-                successMessage = "Group created successfully!";
-            }
+      successMessage = "Skupina úspešne vytvorená!";
+  }
 
-            CloseGroupModal();
-            await LoadData();
+   CloseGroupModal();
+    await LoadData();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error saving group: {ex.Message}";
-        }
+            errorMessage = $"Chyba pri ukladaní skupiny: {ex.Message}";
+      }
     }
 
     private async Task DeleteGroup(int id)
     {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this group?"))
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Ste si istý, že chcete vymaza? túto skupinu?"))
         {
-            try
+  try
             {
-                await StudentGroupService.DeleteStudentGroupAsync(id);
-                successMessage = "Group deleted successfully!";
-                await LoadData();
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Error deleting group: {ex.Message}";
-            }
-        }
+    await StudentGroupService.DeleteStudentGroupAsync(id);
+      successMessage = "Skupina úspešne vymazaná!";
+        await LoadData();
+ }
+       catch (Exception ex)
+  {
+  errorMessage = $"Chyba pri mazaní skupiny: {ex.Message}";
+      }
+     }
     }
 
     private void ShowAddStudentToGroupModal(int groupId)
     {
         currentGroupIdForAddingStudent = groupId;
         selectedStudentIdToAdd = 0;
+        selectedStudentIdsForModal = new();
         showAddStudentModal = true;
     }
 
     private void CloseAddStudentModal()
     {
         showAddStudentModal = false;
-    }
+  }
 
     private async Task AddStudentToGroup()
     {
-        if (selectedStudentIdToAdd == 0)
-            return;
+   if (selectedStudentIdToAdd == 0)
+    return;
 
         try
         {
             await StudentGroupService.AddStudentToGroupAsync(currentGroupIdForAddingStudent, selectedStudentIdToAdd);
-            successMessage = "Student added to group successfully!";
-            CloseAddStudentModal();
+         successMessage = "Študent úspešne pridaný do skupiny!";
+    CloseAddStudentModal();
+            await LoadData();
+     }
+        catch (Exception ex)
+    {
+            errorMessage = $"Chyba pri pridávaní študenta do skupiny: {ex.Message}";
+        }
+    }
+
+    private async Task AddStudentsToGroup()
+    {
+        if (selectedStudentIdsForModal.Count == 0)
+            return;
+
+        try
+        {
+     // Add each selected student to the group
+       foreach (var studentId in selectedStudentIdsForModal)
+            {
+                await StudentGroupService.AddStudentToGroupAsync(currentGroupIdForAddingStudent, studentId);
+    }
+
+            var count = selectedStudentIdsForModal.Count;
+       successMessage = count == 1
+           ? "Študent úspešne pridaný do skupiny!"
+: $"{count} študentov úspešne pridaných do skupiny!";
+  CloseAddStudentModal();
             await LoadData();
         }
-        catch (Exception ex)
+ catch (Exception ex)
         {
-            errorMessage = $"Error adding student to group: {ex.Message}";
+       errorMessage = $"Chyba pri pridávaní študentov do skupiny: {ex.Message}";
         }
     }
 
     private async Task RemoveStudentFromGroup(int groupId, int studentId)
     {
-        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove this student from the group?"))
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Ste si istý, že chcete odstráni? tohto študenta zo skupiny?"))
         {
-            try
-            {
-                await StudentGroupService.RemoveStudentFromGroupAsync(groupId, studentId);
-                successMessage = "Student removed from group successfully!";
-                await LoadData();
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Error removing student from group: {ex.Message}";
-            }
+   try
+        {
+        await StudentGroupService.RemoveStudentFromGroupAsync(groupId, studentId);
+       successMessage = "Študent úspešne odstránený zo skupiny!";
+        await LoadData();
+      }
+       catch (Exception ex)
+     {
+             errorMessage = $"Chyba pri odstra?ovaní študenta zo skupiny: {ex.Message}";
+    }
         }
     }
 
     private List<StudentDto> GetAvailableStudentsForGroup(int groupId)
     {
-        var group = groups.FirstOrDefault(g => g.Id == groupId);
-        if (group == null)
+ var group = groups.FirstOrDefault(g => g.Id == groupId);
+     if (group == null)
             return availableStudents;
 
         var studentIdsInGroup = group.Students.Select(s => s.Id).ToHashSet();
-        return availableStudents.Where(s => !studentIdsInGroup.Contains(s.Id)).ToList();
+     return availableStudents.Where(s => !studentIdsInGroup.Contains(s.Id)).ToList();
     }
 
     private void OnStudentSelectionChanged(ChangeEventArgs e)
     {
         if (e.Value is string[] selectedValues)
         {
-            selectedStudentIds = selectedValues.Select(int.Parse).ToList();
+      selectedStudentIds = selectedValues.Select(int.Parse).ToList();
         }
         else if (e.Value is string singleValue && !string.IsNullOrEmpty(singleValue))
         {
             selectedStudentIds = new List<int> { int.Parse(singleValue) };
         }
-        else
+      else
         {
-            selectedStudentIds = new List<int>();
+  selectedStudentIds = new List<int>();
+   }
+    }
+
+    private void ToggleGroupStudentSelection(int studentId, ChangeEventArgs e)
+    {
+        if (e.Value is bool isChecked)
+        {
+ if (isChecked)
+            {
+    if (!selectedStudentIds.Contains(studentId))
+     {
+    selectedStudentIds.Add(studentId);
+          }
+            }
+   else
+   {
+      selectedStudentIds.Remove(studentId);
+    }
+     }
+    }
+
+    private void ToggleSelectAllGroupStudents(ChangeEventArgs e)
+    {
+    if (e.Value is bool isChecked)
+        {
+            if (isChecked)
+ {
+     selectedStudentIds = availableStudents.Select(s => s.Id).ToList();
+ }
+   else
+   {
+            selectedStudentIds.Clear();
+   }
         }
+    }
+
+    private void ToggleModalGroupStudentSelection(int studentId, ChangeEventArgs e)
+    {
+if (e.Value is bool isChecked)
+        {
+ if (isChecked)
+ {
+    if (!selectedStudentIdsForModal.Contains(studentId))
+         {
+          selectedStudentIdsForModal.Add(studentId);
+                }
+   }
+            else
+ {
+              selectedStudentIdsForModal.Remove(studentId);
+            }
+        }
+    }
+
+    private void ToggleSelectAllModalGroupStudents(ChangeEventArgs e)
+    {
+        if (e.Value is bool isChecked)
+      {
+  if (isChecked)
+     {
+      var availableStudents = GetAvailableStudentsForGroup(currentGroupIdForAddingStudent);
+      selectedStudentIdsForModal = availableStudents.Select(s => s.Id).ToList();
+            }
+ else
+      {
+      selectedStudentIdsForModal.Clear();
+       }
+ }
     }
 }

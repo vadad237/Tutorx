@@ -1,7 +1,7 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">TutorX</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <button title="Navigačné menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
@@ -11,7 +11,7 @@
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Domov
             </NavLink>
         </div>
 
@@ -20,16 +20,16 @@
             <div class="accordion-header">
                 <button class="accordion-button @(studentsExpanded ? "" : "collapsed")" type="button"
                         @onclick="@(() => ToggleAccordion("students"))" @onclick:stopPropagation="true">
-                    <span class="bi bi-people-fill me-2" aria-hidden="true"></span> Students
+                    <span class="bi bi-people-fill me-2" aria-hidden="true"></span> Študenti
                 </button>
             </div>
             <div class="accordion-collapse @(studentsExpanded ? "show" : "collapse")">
                 <div class="accordion-body">
                     <NavLink class="nav-link sub-link" href="students">
-                        <span class="bi bi-list-ul me-2" aria-hidden="true"></span> Student List
+                        <span class="bi bi-list-ul me-2" aria-hidden="true"></span> Zoznam študentov
                     </NavLink>
                     <NavLink class="nav-link sub-link" href="student-groups">
-                        <span class="bi bi-collection me-2" aria-hidden="true"></span> Student Groups
+                        <span class="bi bi-collection me-2" aria-hidden="true"></span> Skupiny študentov
                     </NavLink>
                 </div>
             </div>
@@ -40,16 +40,13 @@
             <div class="accordion-header">
                 <button class="accordion-button @(activitiesExpanded ? "" : "collapsed")" type="button"
                         @onclick="@(() => ToggleAccordion("activities"))" @onclick:stopPropagation="true">
-                    <span class="bi bi-clipboard-check me-2" aria-hidden="true"></span> Activities
+                    <span class="bi bi-clipboard-check me-2" aria-hidden="true"></span> Aktivity
                 </button>
             </div>
             <div class="accordion-collapse @(activitiesExpanded ? "show" : "collapse")">
                 <div class="accordion-body">
                     <NavLink class="nav-link sub-link" href="activities">
-                        <span class="bi bi-list-task me-2" aria-hidden="true"></span> Activity List
-                    </NavLink>
-                    <NavLink class="nav-link sub-link" href="assignments">
-                        <span class="bi bi-check2-square me-2" aria-hidden="true"></span> Assignments
+                        <span class="bi bi-list-task me-2" aria-hidden="true"></span> Zoznam aktivít
                     </NavLink>
                 </div>
             </div>
@@ -60,16 +57,13 @@
             <div class="accordion-header">
                 <button class="accordion-button @(drawsExpanded ? "" : "collapsed")" type="button"
                         @onclick="@(() => ToggleAccordion("draws"))" @onclick:stopPropagation="true">
-                    <span class="bi bi-shuffle me-2" aria-hidden="true"></span> Random Selection
+                    <span class="bi bi-shuffle me-2" aria-hidden="true"></span> Náhodný výber
                 </button>
             </div>
             <div class="accordion-collapse @(drawsExpanded ? "show" : "collapse")">
                 <div class="accordion-body">
                     <NavLink class="nav-link sub-link" href="draws">
-                        <span class="bi bi-arrow-repeat me-2" aria-hidden="true"></span> Create Draw
-                    </NavLink>
-                    <NavLink class="nav-link sub-link" href="draw-history">
-                        <span class="bi bi-clock-history me-2" aria-hidden="true"></span> Draw History
+                        <span class="bi bi-arrow-repeat me-2" aria-hidden="true"></span> Žrebovania
                     </NavLink>
                 </div>
             </div>
