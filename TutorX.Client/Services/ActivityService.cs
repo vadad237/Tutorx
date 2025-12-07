@@ -12,6 +12,7 @@ public interface IActivityService
     Task DeleteActivityAsync(int id);
     Task AddStudentToActivityAsync(int activityId, int studentId);
     Task RemoveStudentFromActivityAsync(int activityId, int studentId);
+    Task AddStudentsToActivityAsync(int activityId, List<int> studentIds);
 }
 
 public class ActivityService : IActivityService
@@ -69,6 +70,12 @@ public class ActivityService : IActivityService
     public async Task RemoveStudentFromActivityAsync(int activityId, int studentId)
     {
         var response = await _httpClient.DeleteAsync($"api/activities/{activityId}/students/{studentId}");
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task AddStudentsToActivityAsync(int activityId, List<int> studentIds)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"api/activities/{activityId}/students/bulk", studentIds);
         response.EnsureSuccessStatusCode();
     }
 }

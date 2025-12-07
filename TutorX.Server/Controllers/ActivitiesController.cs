@@ -137,6 +137,29 @@ public class ActivitiesController : ControllerBase
         return Ok();
     }
 
+    [HttpPost("{activityId}/students/bulk")]
+    public async Task<IActionResult> AddStudentsToActivity(int activityId, [FromBody] List<int> studentIds)
+    {
+        var activity = await _context.Activities.Include(a => a.Students).FirstOrDefaultAsync(a => a.Id == activityId);
+        if (activity == null)
+        {
+            return NotFound("Activity not found");
+        }
+
+        var students = await _context.Students.Where(s => studentIds.Contains(s.Id)).ToListAsync();
+
+        foreach (var student in students)
+        {
+            if (!activity.Students.Any(s => s.Id == student.Id))
+            {
+                activity.Students.Add(student);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok();
+    }
+
     [HttpDelete("{activityId}/students/{studentId}")]
     public async Task<IActionResult> RemoveStudentFromActivity(int activityId, int studentId)
     {

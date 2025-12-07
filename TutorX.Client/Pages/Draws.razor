@@ -1,0 +1,402 @@
+@page "/draws"
+@using TutorX.Shared.DTOs
+@using TutorX.Client.Services
+@inject IDrawService DrawService
+@inject IActivityService ActivityService
+@inject IStudentService StudentService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Random Selection (Draws)</PageTitle>
+
+<div class="container-fluid">
+  <div class="row mb-3">
+ <div class="col">
+   <h1>Random Selection (Draws)</h1>
+        </div>
+   <div class="col-auto">
+     <button class="btn btn-primary" @onclick="ShowAddDrawModal">
+     <i class="bi bi-plus-circle"></i> New Draw
+     </button>
+   </div>
+    </div>
+
+@if (loading)
+  {
+<div class="text-center">
+       <div class="spinner-border" role="status">
+         <span class="visually-hidden">Loading...</span>
+   </div>
+  </div>
+    }
+  else if (errorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+@errorMessage
+   <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+     </div>
+    }
+    else if (successMessage != null)
+    {
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+  @successMessage
+  <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+        </div>
+    }
+
+    @if (!loading)
+    {
+        <div class="row">
+ @if (draws.Any())
+  {
+   @foreach (var draw in draws)
+   {
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card draw-card" @onclick="() => ShowDrawDetails(draw.Id)">
+  <div class="card-body">
+        <h5 class="card-title">@draw.Name</h5>
+         <div class="card-info">
+       <p class="card-text text-muted mb-2">
+   <i class="bi bi-calendar"></i>
+ <span class="info-label">Date:</span>
+      @draw.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+        </p>
+      <p class="card-text text-muted mb-2">
+   <i class="bi bi-clipboard-check"></i>
+    <span class="info-label">Activity:</span>
+    @(draw.ActivityName ?? "Not specified")
+   </p>
+     <p class="card-text text-muted mb-2">
+     <i class="bi bi-people-fill"></i>
+    <span class="info-label">Selected:</span>
+ @draw.Results.Count student@(draw.Results.Count != 1 ? "s" : "")
+</p>
+   </div>
+    <div class="card-actions" @onclick:stopPropagation="true">
+      <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteDraw(draw.Id)">
+     <i class="bi bi-trash"></i> Delete
+   </button>
+    </div>
+   </div>
+       </div>
+     </div>
+}
+      }
+   else
+{
+ <div class="col-12">
+     <div class="alert alert-info">
+        No draws found. Click "New Draw" to create your first random selection.
+    </div>
+</div>
+         }
+   </div>
+    }
+</div>
+
+<!-- Draw Details Modal -->
+@if (expandedDrawId.HasValue)
+{
+    var draw = draws.FirstOrDefault(d => d.Id == expandedDrawId.Value);
+    if (draw != null)
+  {
+      <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+   <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+    <div class="modal-header">
+   <h5 class="modal-title">@draw.Name - Selected Students</h5>
+        <button type="button" class="btn-close" @onclick="CloseDrawDetails"></button>
+  </div>
+<div class="modal-body">
+      <div class="mb-3">
+   <p><strong>Activity:</strong> @(draw.ActivityName ?? "Not specified")</p>
+       <p><strong>Date:</strong> @draw.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</p>
+   </div>
+   @if (draw.Results.Any())
+  {
+      <h6>Randomly Selected Students:</h6>
+      <div class="list-group">
+      @foreach (var result in draw.Results)
+  {
+         <div class="list-group-item">
+          <i class="bi bi-person-check"></i> <strong>@result.StudentName</strong>
+           </div>
+  }
+       </div>
+    }
+       else
+    {
+     <p class="text-muted">No students were selected.</p>
+    }
+  </div>
+    </div>
+      </div>
+  </div>
+    }
+}
+
+<!-- Add Draw Modal -->
+@if (showDrawModal)
+{
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+  <div class="modal-content">
+ <div class="modal-header">
+  <h5 class="modal-title">Create New Draw</h5>
+     <button type="button" class="btn-close" @onclick="CloseDrawModal"></button>
+</div>
+<div class="modal-body">
+      <div class="mb-3">
+        <label class="form-label">Name <span class="text-danger">*</span></label>
+    <input type="text" class="form-control @(string.IsNullOrWhiteSpace(drawName) && showValidation ? "is-invalid" : "")" @bind="drawName" />
+   @if (string.IsNullOrWhiteSpace(drawName) && showValidation)
+       {
+   <div class="invalid-feedback">Name is required</div>
+ }
+   </div>
+       <div class="mb-3">
+        <label class="form-label">Activity <span class="text-danger">*</span></label>
+      <select class="form-select @(!selectedActivityId.HasValue && showValidation ? "is-invalid" : "")" @bind="selectedActivityId" @bind:after="OnActivitySelected">
+     <option value="">-- Select an activity --</option>
+    @foreach (var activity in availableActivities)
+    {
+      <option value="@activity.Id">@activity.Name</option>
+    }
+       </select>
+       @if (!selectedActivityId.HasValue && showValidation)
+  {
+   <div class="invalid-feedback">Activity is required</div>
+       }
+   </div>
+  @if (selectedActivityId.HasValue)
+        {
+      var availableForDraw = GetStudentsAvailableForDraw();
+      var alreadyInActivity = GetStudentsAlreadyInActivity();
+  
+           <div class="mb-3">
+   <label class="form-label">Students to Select From <span class="text-danger">*</span></label>
+    <select multiple class="form-select" size="10" @onchange="OnStudentSelectionChanged">
+         @foreach (var student in availableForDraw.OrderBy(s => s.Name))
+  {
+     <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">
+       @student.Name
+     </option>
+    }
+          </select>
+ <div class="form-text">
+         Hold Ctrl (Cmd on Mac) to select multiple students.<br/>
+    <strong>Only showing students NOT already assigned to this activity.</strong><br/>
+     @if (alreadyInActivity.Any())
+  {
+        <span class="text-info">
+    @alreadyInActivity.Count student@(alreadyInActivity.Count != 1 ? "s are" : " is") already in this activity and excluded from the draw.
+      </span>
+    }
+         </div>
+  @if (selectedStudentIds.Count == 0 && showValidation)
+       {
+         <div class="text-danger mt-1" style="font-size: 0.875rem;">At least one student must be selected</div>
+           }
+    </div>
+   <div class="mb-3">
+     <label class="form-label">Number of Students to Randomly Select <span class="text-danger">*</span></label>
+      <input type="number" class="form-control" min="1" max="@selectedStudentIds.Count" @bind="numberToSelect" />
+       <div class="form-text">How many students to randomly select from the pool above (max: @selectedStudentIds.Count)</div>
+   </div>
+      <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> <strong>Note:</strong> Selected students will be automatically added to the activity.
+   </div>
+      }
+         </div>
+      <div class="modal-footer">
+ <button type="button" class="btn btn-secondary" @onclick="CloseDrawModal">Cancel</button>
+          <button type="button" class="btn btn-primary" @onclick="CreateDraw">
+   <i class="bi bi-shuffle"></i> Run Draw
+    </button>
+     </div>
+         </div>
+   </div>
+    </div>
+}
+
+@code {
+    private List<DrawDto> draws = new();
+    private List<ActivityDto> availableActivities = new();
+    private List<StudentDto> availableStudents = new();
+    private bool loading = true;
+    private string? errorMessage;
+    private string? successMessage;
+    private bool showDrawModal = false;
+    private int? expandedDrawId;
+
+  // Form fields
+    private string drawName = "";
+    private int? selectedActivityId;
+ private List<int> selectedStudentIds = new();
+    private int numberToSelect = 1;
+    private bool showValidation = false;
+
+  protected override async Task OnInitializedAsync()
+  {
+     await LoadData();
+}
+
+    private async Task LoadData()
+    {
+  try
+  {
+      loading = true;
+       errorMessage = null;
+    draws = await DrawService.GetDrawsAsync();
+   availableActivities = await ActivityService.GetActivitiesAsync();
+  availableStudents = await StudentService.GetStudentsAsync();
+    }
+   catch (Exception ex)
+    {
+     errorMessage = $"Error loading data: {ex.Message}";
+  }
+     finally
+     {
+        loading = false;
+     }
+    }
+
+    private void ShowDrawDetails(int drawId)
+    {
+ expandedDrawId = drawId;
+    }
+
+    private void CloseDrawDetails()
+    {
+  expandedDrawId = null;
+  }
+
+    private void ShowAddDrawModal()
+  {
+   drawName = "";
+selectedActivityId = null;
+  selectedStudentIds = new();
+      numberToSelect = 1;
+  showValidation = false;
+      showDrawModal = true;
+    }
+
+    private void CloseDrawModal()
+    {
+      showDrawModal = false;
+    }
+
+    private void OnActivitySelected()
+  {
+     selectedStudentIds = new();
+ numberToSelect = 1;
+    }
+
+    private List<StudentDto> GetStudentsAlreadyInActivity()
+    {
+  if (!selectedActivityId.HasValue)
+         return new List<StudentDto>();
+
+        var activity = availableActivities.FirstOrDefault(a => a.Id == selectedActivityId.Value);
+        if (activity == null)
+ return new List<StudentDto>();
+
+   var activityStudentIds = activity.StudentIds.ToHashSet();
+ return availableStudents.Where(s => activityStudentIds.Contains(s.Id)).ToList();
+    }
+
+    private List<StudentDto> GetStudentsAvailableForDraw()
+  {
+        if (!selectedActivityId.HasValue)
+            return new List<StudentDto>();
+
+   var activity = availableActivities.FirstOrDefault(a => a.Id == selectedActivityId.Value);
+        if (activity == null)
+return availableStudents;
+
+  var activityStudentIds = activity.StudentIds.ToHashSet();
+        return availableStudents.Where(s => !activityStudentIds.Contains(s.Id)).ToList();
+    }
+
+private async Task CreateDraw()
+    {
+ showValidation = true;
+
+     if (string.IsNullOrWhiteSpace(drawName) || !selectedActivityId.HasValue || selectedStudentIds.Count == 0)
+        {
+   return;
+  }
+
+ if (numberToSelect < 1 || numberToSelect > selectedStudentIds.Count)
+  {
+   errorMessage = $"Number to select must be between 1 and {selectedStudentIds.Count}";
+  return;
+        }
+
+  try
+  {
+       var createDto = new CreateDrawDto
+    {
+   Name = drawName,
+   ActivityId = selectedActivityId,
+   StudentIds = selectedStudentIds,
+           NumberToSelect = numberToSelect
+   };
+
+    var createdDraw = await DrawService.CreateDrawAsync(createDto);
+        
+     // Add the selected students to the activity
+        if (createdDraw.Results.Any() && selectedActivityId.HasValue)
+      {
+      var selectedStudentIdsFromDraw = createdDraw.Results.Select(r => r.StudentId).ToList();
+  await ActivityService.AddStudentsToActivityAsync(selectedActivityId.Value, selectedStudentIdsFromDraw);
+ }
+
+  successMessage = $"Draw completed! {createdDraw.Results.Count} student(s) randomly selected and added to the activity.";
+  CloseDrawModal();
+    await LoadData();
+  }
+  catch (Exception ex)
+  {
+    errorMessage = $"Error creating draw: {ex.Message}";
+    }
+    }
+
+    private async Task DeleteDraw(int id)
+    {
+if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this draw?"))
+  {
+      try
+ {
+  await DrawService.DeleteDrawAsync(id);
+        successMessage = "Draw deleted successfully!";
+     await LoadData();
+}
+     catch (Exception ex)
+  {
+    errorMessage = $"Error deleting draw: {ex.Message}";
+ }
+        }
+  }
+
+    private void OnStudentSelectionChanged(ChangeEventArgs e)
+  {
+        if (e.Value is string[] selectedValues)
+{
+selectedStudentIds = selectedValues.Select(int.Parse).ToList();
+      }
+      else if (e.Value is string singleValue && !string.IsNullOrEmpty(singleValue))
+        {
+   selectedStudentIds = new List<int> { int.Parse(singleValue) };
+        }
+ else
+      {
+ selectedStudentIds = new List<int>();
+  }
+
+ // Update numberToSelect if it exceeds the new selection count
+ if (numberToSelect > selectedStudentIds.Count)
+        {
+         numberToSelect = selectedStudentIds.Count > 0 ? selectedStudentIds.Count : 1;
+    }
+    }
+}

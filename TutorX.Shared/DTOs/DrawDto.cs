@@ -17,4 +17,6 @@ public class CreateDrawDto
     public string Name { get; set; } = null!;
     public int? ActivityId { get; set; }
     public int? GroupId { get; set; }
+    public List<int> StudentIds { get; set; } = new();
+    public int NumberToSelect { get; set; } = 1;
 }

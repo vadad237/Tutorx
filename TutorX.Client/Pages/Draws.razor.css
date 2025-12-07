@@ -1,0 +1,119 @@
+.draw-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+  border: 1px solid #dee2e6;
+    height: 100%;
+}
+
+    .draw-card:hover {
+  transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+border-color: #0d6efd;
+}
+
+    .draw-card .card-body {
+     padding: 1.5rem;
+        display: flex;
+   flex-direction: column;
+    }
+
+    .draw-card .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    color: #212529;
+    }
+
+.card-info {
+ flex-grow: 1;
+    margin-bottom: 1rem;
+}
+
+    .card-info .card-text {
+   display: flex;
+ align-items: center;
+     gap: 0.5rem;
+    }
+
+.info-label {
+    font-weight: 500;
+  color: #495057;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+ padding-top: 0.75rem;
+    border-top: 1px solid #dee2e6;
+    margin-top: auto;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+ font-size: 0.875rem;
+ color: #dc3545;
+}
+
+.modal .form-select[multiple] {
+    height: auto;
+    cursor: pointer;
+}
+
+    .modal .form-select[multiple] option {
+        padding: 0.5rem;
+    cursor: pointer;
+    }
+
+    .modal .form-select[multiple] option:checked {
+    background-color: #0d6efd;
+        color: white;
+    }
+
+.modal .list-group-item {
+  border-left: none;
+    border-right: none;
+}
+
+.modal .list-group-item:first-child {
+     border-top: none;
+    }
+
+.modal .list-group-item:last-child {
+border-bottom: none;
+    }
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+ color: #0c5460;
+}
+
+.bi-info-circle {
+    margin-right: 0.5rem;
+}
+
+/* Icon spacing */
+.bi-calendar, .bi-clipboard-check, .bi-people-fill, .bi-person-check, 
+.bi-trash, .bi-plus-circle, .bi-shuffle {
+    margin-right: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .draw-card {
+        margin-bottom: 1rem;
+    }
+
+    .card-actions {
+        flex-wrap: wrap;
+    }
+}
