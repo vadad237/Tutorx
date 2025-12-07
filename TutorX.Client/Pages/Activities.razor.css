@@ -7,7 +7,19 @@
 }
 
 .text-danger {
-    color: #dc3545 !important;
+  color: #dc3545 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-success {
+    color: #198754 !important;
+}
+
+.fw-bold {
+    font-weight: 700 !important;
 }
 
 .is-invalid {
@@ -30,6 +42,36 @@
 }
 
 /* Icon spacing */
-.bi-pencil, .bi-trash, .bi-plus-circle {
+.bi-pencil, .bi-trash, .bi-plus-circle, .bi-calendar-event, 
+.bi-person-plus, .bi-x-circle {
     margin-right: 0.25rem;
 }
+
+/* Date button styling */
+.btn-info {
+    color: #fff;
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+  .btn-info:hover {
+        color: #fff;
+ background-color: #31d2f2;
+        border-color: #25cff2;
+    }
+
+    .btn-info:focus {
+    color: #fff;
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.5);
+  }
+
+/* Adjust action buttons spacing */
+td .btn {
+    margin-right: 0.25rem;
+}
+
+    td .btn:last-child {
+        margin-right: 0;
+ }

@@ -9,6 +9,7 @@ public class ActivityDto
     public string? GroupName { get; set; }
     public List<int> StudentIds { get; set; } = new();
     public List<string> StudentNames { get; set; } = new();
+    public DateTime? DueDate { get; set; }
 }
 
 public class CreateActivityDto
@@ -17,6 +18,7 @@ public class CreateActivityDto
     public string? Description { get; set; }
     public int? GroupId { get; set; }
     public List<int> StudentIds { get; set; } = new();
+    public DateTime? DueDate { get; set; }
 }
 
 public class UpdateActivityDto
@@ -25,4 +27,5 @@ public class UpdateActivityDto
     public string? Description { get; set; }
     public int? GroupId { get; set; }
     public List<int> StudentIds { get; set; } = new();
+    public DateTime? DueDate { get; set; }
 }

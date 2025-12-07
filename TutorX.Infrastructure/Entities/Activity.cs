@@ -9,4 +9,5 @@ public class Activity
  public StudentGroup? Group { get; set; } // Navigation property
  public ICollection<Student> Students { get; set; } = new List<Student>(); // Many-to-many with students
  public ICollection<ActivityAssignment> Assignments { get; set; } = new List<ActivityAssignment>(); // Navigation property
+ public DateTime? DueDate { get; set; }
 }
