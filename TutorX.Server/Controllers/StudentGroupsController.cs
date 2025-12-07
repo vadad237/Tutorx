@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TutorX.Infrastructure;
 using TutorX.Infrastructure.Repositories;
 using TutorX.Server.Services;
 using TutorX.Shared.DTOs;
@@ -10,12 +12,20 @@ namespace TutorX.Server.Controllers;
 public class StudentGroupsController : ControllerBase
 {
     private readonly IStudentGroupRepository _groupRepository;
+    private readonly IStudentRepository _studentRepository;
     private readonly IMappingService _mappingService;
+    private readonly TutorXDbContext _context;
 
-    public StudentGroupsController(IStudentGroupRepository groupRepository, IMappingService mappingService)
+    public StudentGroupsController(
+        IStudentGroupRepository groupRepository, 
+        IStudentRepository studentRepository,
+        IMappingService mappingService,
+        TutorXDbContext context)
     {
         _groupRepository = groupRepository;
+        _studentRepository = studentRepository;
         _mappingService = mappingService;
+        _context = context;
     }
 
     [HttpGet]
@@ -29,7 +39,7 @@ public class StudentGroupsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<StudentGroupDto>> GetStudentGroup(int id)
     {
-        var group = await _groupRepository.GetByIdAsync(id);
+        var group = await _context.StudentGroups.Include(g => g.Students).FirstOrDefaultAsync(g => g.Id == id);
 
         if (group == null)
         {
@@ -79,5 +89,48 @@ public class StudentGroupsController : ControllerBase
         await _groupRepository.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    [HttpPost("{groupId}/students/{studentId}")]
+    public async Task<IActionResult> AddStudentToGroup(int groupId, int studentId)
+    {
+        var group = await _context.StudentGroups.Include(g => g.Students).FirstOrDefaultAsync(g => g.Id == groupId);
+        if (group == null)
+        {
+            return NotFound("Group not found");
+        }
+
+        var student = await _studentRepository.GetByIdAsync(studentId);
+        if (student == null)
+        {
+            return NotFound("Student not found");
+        }
+
+        if (!group.Students.Any(s => s.Id == studentId))
+        {
+            group.Students.Add(student);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
+
+    [HttpDelete("{groupId}/students/{studentId}")]
+    public async Task<IActionResult> RemoveStudentFromGroup(int groupId, int studentId)
+    {
+        var group = await _context.StudentGroups.Include(g => g.Students).FirstOrDefaultAsync(g => g.Id == groupId);
+        if (group == null)
+        {
+            return NotFound("Group not found");
+        }
+
+        var student = group.Students.FirstOrDefault(s => s.Id == studentId);
+        if (student != null)
+        {
+            group.Students.Remove(student);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
     }
 }

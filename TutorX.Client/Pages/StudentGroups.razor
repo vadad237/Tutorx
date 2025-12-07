@@ -1,0 +1,448 @@
+@page "/student-groups"
+@using TutorX.Shared.DTOs
+@using TutorX.Client.Services
+@inject IStudentGroupService StudentGroupService
+@inject IStudentService StudentService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Student Groups</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h1>Student Groups</h1>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" @onclick="ShowAddGroupModal">
+                <i class="bi bi-plus-circle"></i> Add Group
+            </button>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+    else if (successMessage != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+        </div>
+    }
+
+    @if (!loading)
+    {
+        <div class="row">
+            @if (groups.Any())
+            {
+                @foreach (var group in groups)
+                {
+                    <div class="col-md-4 col-lg-3 mb-4">
+                        <div class="card group-card @(expandedGroupId == group.Id ? "expanded" : "")" @onclick="() => ToggleGroup(group.Id)">
+                            <div class="card-body">
+                                <h5 class="card-title">@group.Name</h5>
+                                <p class="card-text text-muted">
+                                    <i class="bi bi-people-fill"></i> @group.Students.Count student@(group.Students.Count != 1 ? "s" : "")
+                                </p>
+                                @if (!string.IsNullOrWhiteSpace(group.Description))
+                                {
+                                    <p class="card-description">@group.Description</p>
+                                }
+                                <div class="card-actions" @onclick:stopPropagation="true">
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => ShowEditGroupModal(group)">
+                                        <i class="bi bi-pencil">Edit</i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteGroup(group.Id)">
+                                        <i class="bi bi-trash">Delete</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No groups found. Click "Add Group" to create your first group.
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Group Details Modal -->
+@if (expandedGroupId.HasValue)
+{
+    var group = groups.FirstOrDefault(g => g.Id == expandedGroupId.Value);
+    if (group != null)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@group.Name - Students</h5>
+                        <button type="button" class="btn-close" @onclick="CloseGroupDetails"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <button class="btn btn-sm btn-success" @onclick="() => ShowAddStudentToGroupModal(group.Id)">
+                                <i class="bi bi-person-plus"></i> Add Student
+                            </button>
+                        </div>
+                        @if (group.Students.Any())
+                        {
+                            <div class="list-group">
+                                @foreach (var student in group.Students)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>@student.Name</strong>
+                                            <br />
+                                            <small class="text-muted">@student.Email</small>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveStudentFromGroup(group.Id, student.Id)">
+                                            <i class="bi bi-x-circle"></i> Remove
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No students in this group yet.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<!-- Add/Edit Group Modal -->
+@if (showGroupModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditingGroup ? "Edit Group" : "Add Group")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseGroupModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @(string.IsNullOrWhiteSpace(groupName) && showValidation ? "is-invalid" : "")" @bind="groupName" />
+                        @if (string.IsNullOrWhiteSpace(groupName) && showValidation)
+                        {
+                            <div class="invalid-feedback">Name is required</div>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description (optional)</label>
+                        <textarea class="form-control" rows="3" @bind="groupDescription"></textarea>
+                    </div>
+                    @if (!isEditingGroup)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Assign Students (optional)</label>
+                            <select multiple class="form-select" size="5" @onchange="OnStudentSelectionChanged">
+                                @foreach (var student in availableStudents)
+                                {
+                                    <option value="@student.Id" selected="@selectedStudentIds.Contains(student.Id)">@student.Name</option>
+                                }
+                            </select>
+                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple students</div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseGroupModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveGroup">
+                        @(isEditingGroup ? "Update" : "Create")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Add Student to Group Modal -->
+@if (showAddStudentModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Student to Group</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAddStudentModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Student</label>
+                        <select class="form-select" @bind="selectedStudentIdToAdd">
+                            <option value="">-- Select a student --</option>
+                            @foreach (var student in GetAvailableStudentsForGroup(currentGroupIdForAddingStudent))
+                            {
+                                <option value="@student.Id">@student.Name (@student.Email)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseAddStudentModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="AddStudentToGroup" disabled="@(selectedStudentIdToAdd == 0)">
+                        Add
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<StudentGroupDto> groups = new();
+    private List<StudentDto> availableStudents = new();
+    private bool loading = true;
+    private string? errorMessage;
+    private string? successMessage;
+    private bool showGroupModal = false;
+    private bool isEditingGroup = false;
+    private int? editingGroupId;
+    private int? expandedGroupId;
+    private bool showAddStudentModal = false;
+    private int currentGroupIdForAddingStudent;
+    private int selectedStudentIdToAdd;
+
+    // Form fields
+    private string groupName = "";
+    private string? groupDescription;
+    private List<int> selectedStudentIds = new();
+    private bool showValidation = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            loading = true;
+            errorMessage = null;
+            groups = await StudentGroupService.GetStudentGroupsAsync();
+            availableStudents = await StudentService.GetStudentsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ToggleGroup(int groupId)
+    {
+        if (expandedGroupId == groupId)
+        {
+            expandedGroupId = null;
+        }
+        else
+        {
+            expandedGroupId = groupId;
+        }
+    }
+
+    private void CloseGroupDetails()
+    {
+        expandedGroupId = null;
+    }
+
+    private void ShowAddGroupModal()
+    {
+        isEditingGroup = false;
+        editingGroupId = null;
+        groupName = "";
+        groupDescription = null;
+        selectedStudentIds = new();
+        showValidation = false;
+        showGroupModal = true;
+    }
+
+    private void ShowEditGroupModal(StudentGroupDto group)
+    {
+        isEditingGroup = true;
+        editingGroupId = group.Id;
+        groupName = group.Name;
+        groupDescription = group.Description;
+        showValidation = false;
+        showGroupModal = true;
+    }
+
+    private void CloseGroupModal()
+    {
+        showGroupModal = false;
+    }
+
+    private async Task SaveGroup()
+    {
+        showValidation = true;
+
+        if (string.IsNullOrWhiteSpace(groupName))
+        {
+            return;
+        }
+
+        try
+        {
+            if (isEditingGroup && editingGroupId.HasValue)
+            {
+                var updateDto = new UpdateStudentGroupDto
+                {
+                    Name = groupName,
+                    Description = groupDescription
+                };
+                await StudentGroupService.UpdateStudentGroupAsync(editingGroupId.Value, updateDto);
+                successMessage = "Group updated successfully!";
+            }
+            else
+            {
+                var createDto = new CreateStudentGroupDto
+                {
+                    Name = groupName,
+                    Description = groupDescription
+                };
+                var createdGroup = await StudentGroupService.CreateStudentGroupAsync(createDto);
+
+                // Add students to the group if any were selected
+                foreach (var studentId in selectedStudentIds)
+                {
+                    try
+                    {
+                        await StudentGroupService.AddStudentToGroupAsync(createdGroup.Id, studentId);
+                    }
+                    catch
+                    {
+                        // Continue if adding a student fails
+                    }
+                }
+
+                successMessage = "Group created successfully!";
+            }
+
+            CloseGroupModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving group: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteGroup(int id)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this group?"))
+        {
+            try
+            {
+                await StudentGroupService.DeleteStudentGroupAsync(id);
+                successMessage = "Group deleted successfully!";
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error deleting group: {ex.Message}";
+            }
+        }
+    }
+
+    private void ShowAddStudentToGroupModal(int groupId)
+    {
+        currentGroupIdForAddingStudent = groupId;
+        selectedStudentIdToAdd = 0;
+        showAddStudentModal = true;
+    }
+
+    private void CloseAddStudentModal()
+    {
+        showAddStudentModal = false;
+    }
+
+    private async Task AddStudentToGroup()
+    {
+        if (selectedStudentIdToAdd == 0)
+            return;
+
+        try
+        {
+            await StudentGroupService.AddStudentToGroupAsync(currentGroupIdForAddingStudent, selectedStudentIdToAdd);
+            successMessage = "Student added to group successfully!";
+            CloseAddStudentModal();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding student to group: {ex.Message}";
+        }
+    }
+
+    private async Task RemoveStudentFromGroup(int groupId, int studentId)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove this student from the group?"))
+        {
+            try
+            {
+                await StudentGroupService.RemoveStudentFromGroupAsync(groupId, studentId);
+                successMessage = "Student removed from group successfully!";
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error removing student from group: {ex.Message}";
+            }
+        }
+    }
+
+    private List<StudentDto> GetAvailableStudentsForGroup(int groupId)
+    {
+        var group = groups.FirstOrDefault(g => g.Id == groupId);
+        if (group == null)
+            return availableStudents;
+
+        var studentIdsInGroup = group.Students.Select(s => s.Id).ToHashSet();
+        return availableStudents.Where(s => !studentIdsInGroup.Contains(s.Id)).ToList();
+    }
+
+    private void OnStudentSelectionChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string[] selectedValues)
+        {
+            selectedStudentIds = selectedValues.Select(int.Parse).ToList();
+        }
+        else if (e.Value is string singleValue && !string.IsNullOrEmpty(singleValue))
+        {
+            selectedStudentIds = new List<int> { int.Parse(singleValue) };
+        }
+        else
+        {
+            selectedStudentIds = new List<int>();
+        }
+    }
+}

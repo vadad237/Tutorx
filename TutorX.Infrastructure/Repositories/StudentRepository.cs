@@ -7,10 +7,10 @@ public class StudentRepository : Repository<Student>, IStudentRepository
 {
     public StudentRepository(TutorXDbContext context) : base(context)
     {
-  }
+    }
 
     public async Task<IEnumerable<Student>> GetStudentsWithGroupsAsync()
     {
-        return await _context.Students.Include(s => s.Group).ToListAsync();
- }
+        return await _context.Students.Include(s => s.Groups).ToListAsync();
+    }
 }

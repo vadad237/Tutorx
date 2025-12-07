@@ -15,8 +15,8 @@ public class MappingService : IMappingService
             Email = student.Email,
             CardNumber = student.CardNumber,
             Year = student.Year,
-            GroupId = student.GroupId,
-            GroupName = student.Group?.Name
+            GroupIds = student.Groups?.Select(g => g.Id).ToList() ?? new List<int>(),
+            GroupNames = student.Groups?.Select(g => g.Name).ToList() ?? new List<string>()
         };
     }
 
@@ -27,8 +27,8 @@ public class MappingService : IMappingService
             Name = dto.Name,
             Email = dto.Email,
             CardNumber = dto.CardNumber,
-            Year = dto.Year,
-            GroupId = dto.GroupId
+            Year = dto.Year
+            // Groups will be set separately in the controller
         };
     }
 
@@ -38,7 +38,7 @@ public class MappingService : IMappingService
         student.Email = dto.Email;
         student.CardNumber = dto.CardNumber;
         student.Year = dto.Year;
-        student.GroupId = dto.GroupId;
+        // Groups will be updated separately in the controller
     }
 
     // StudentGroup mappings

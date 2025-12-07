@@ -18,5 +18,14 @@ public class TutorXDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure many-to-many relationship between Student and StudentGroup
+        modelBuilder.Entity<Student>()
+      .HasMany(s => s.Groups)
+        .WithMany(g => g.Students)
+            .UsingEntity<Dictionary<string, object>>(
+                "StudentGroupMembership",
+         j => j.HasOne<StudentGroup>().WithMany().HasForeignKey("GroupId"),
+   j => j.HasOne<Student>().WithMany().HasForeignKey("StudentId")
+            );
     }
 }

@@ -14,21 +14,95 @@
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="students">
-                <span class="bi bi-people-fill" aria-hidden="true"></span> Students
-            </NavLink>
+
+        <!-- Students Accordion -->
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <button class="accordion-button @(studentsExpanded ? "" : "collapsed")" type="button"
+                        @onclick="@(() => ToggleAccordion("students"))" @onclick:stopPropagation="true">
+                    <span class="bi bi-people-fill me-2" aria-hidden="true"></span> Students
+                </button>
+            </div>
+            <div class="accordion-collapse @(studentsExpanded ? "show" : "collapse")">
+                <div class="accordion-body">
+                    <NavLink class="nav-link sub-link" href="students">
+                        <span class="bi bi-list-ul me-2" aria-hidden="true"></span> Student List
+                    </NavLink>
+                    <NavLink class="nav-link sub-link" href="student-groups">
+                        <span class="bi bi-collection me-2" aria-hidden="true"></span> Student Groups
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activities Accordion -->
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <button class="accordion-button @(activitiesExpanded ? "" : "collapsed")" type="button"
+                        @onclick="@(() => ToggleAccordion("activities"))" @onclick:stopPropagation="true">
+                    <span class="bi bi-clipboard-check me-2" aria-hidden="true"></span> Activities
+                </button>
+            </div>
+            <div class="accordion-collapse @(activitiesExpanded ? "show" : "collapse")">
+                <div class="accordion-body">
+                    <NavLink class="nav-link sub-link" href="activities">
+                        <span class="bi bi-list-task me-2" aria-hidden="true"></span> Activity List
+                    </NavLink>
+                    <NavLink class="nav-link sub-link" href="assignments">
+                        <span class="bi bi-check2-square me-2" aria-hidden="true"></span> Assignments
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+
+        <!-- Random Selection Accordion -->
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <button class="accordion-button @(drawsExpanded ? "" : "collapsed")" type="button"
+                        @onclick="@(() => ToggleAccordion("draws"))" @onclick:stopPropagation="true">
+                    <span class="bi bi-shuffle me-2" aria-hidden="true"></span> Random Selection
+                </button>
+            </div>
+            <div class="accordion-collapse @(drawsExpanded ? "show" : "collapse")">
+                <div class="accordion-body">
+                    <NavLink class="nav-link sub-link" href="draws">
+                        <span class="bi bi-arrow-repeat me-2" aria-hidden="true"></span> Create Draw
+                    </NavLink>
+                    <NavLink class="nav-link sub-link" href="draw-history">
+                        <span class="bi bi-clock-history me-2" aria-hidden="true"></span> Draw History
+                    </NavLink>
+                </div>
+            </div>
         </div>
     </nav>
 </div>
 
 @code {
     private bool collapseNavMenu = true;
+    private bool studentsExpanded = false;
+    private bool activitiesExpanded = false;
+    private bool drawsExpanded = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void ToggleAccordion(string section)
+    {
+        switch (section)
+        {
+            case "students":
+                studentsExpanded = !studentsExpanded;
+                break;
+            case "activities":
+                activitiesExpanded = !activitiesExpanded;
+                break;
+            case "draws":
+                drawsExpanded = !drawsExpanded;
+                break;
+        }
     }
 }

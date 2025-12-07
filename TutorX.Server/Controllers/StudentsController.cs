@@ -1,5 +1,7 @@
 ﻿using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TutorX.Infrastructure;
 using TutorX.Infrastructure.Entities;
 using TutorX.Infrastructure.Repositories;
 using TutorX.Server.Services;
@@ -13,17 +15,19 @@ public class StudentsController : ControllerBase
 {
     private readonly IStudentRepository _studentRepository;
     private readonly IMappingService _mappingService;
+    private readonly TutorXDbContext _context;
 
-    public StudentsController(IStudentRepository studentRepository, IMappingService mappingService)
+    public StudentsController(IStudentRepository studentRepository, IMappingService mappingService, TutorXDbContext context)
     {
         _studentRepository = studentRepository;
         _mappingService = mappingService;
+        _context = context;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents()
     {
-        var students = await _studentRepository.GetAllAsync();
+        var students = await _studentRepository.GetStudentsWithGroupsAsync();
         var studentDtos = students.Select(_mappingService.MapToDto);
         return Ok(studentDtos);
     }
@@ -31,7 +35,7 @@ public class StudentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<StudentDto>> GetStudent(int id)
     {
-        var student = await _studentRepository.GetByIdAsync(id);
+        var student = await _context.Students.Include(s => s.Groups).FirstOrDefaultAsync(s => s.Id == id);
 
         if (student == null)
         {
@@ -45,23 +49,45 @@ public class StudentsController : ControllerBase
     public async Task<ActionResult<StudentDto>> CreateStudent(CreateStudentDto createDto)
     {
         var student = _mappingService.MapToEntity(createDto);
+        
+        // Load groups if specified
+        if (createDto.GroupIds.Any())
+        {
+            var groups = await _context.StudentGroups.Where(g => createDto.GroupIds.Contains(g.Id)).ToListAsync();
+            student.Groups = groups;
+        }
+
         await _studentRepository.AddAsync(student);
         await _studentRepository.SaveChangesAsync();
 
-        var studentDto = _mappingService.MapToDto(student);
+        // Reload student with groups
+        var createdStudent = await _context.Students.Include(s => s.Groups).FirstOrDefaultAsync(s => s.Id == student.Id);
+        var studentDto = _mappingService.MapToDto(createdStudent!);
         return CreatedAtAction(nameof(GetStudent), new { id = student.Id }, studentDto);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateStudent(int id, UpdateStudentDto updateDto)
     {
-        var existingStudent = await _studentRepository.GetByIdAsync(id);
+        var existingStudent = await _context.Students.Include(s => s.Groups).FirstOrDefaultAsync(s => s.Id == id);
         if (existingStudent == null)
         {
             return NotFound();
         }
 
         _mappingService.MapToEntity(updateDto, existingStudent);
+        
+        // Update groups
+        existingStudent.Groups.Clear();
+        if (updateDto.GroupIds.Any())
+        {
+            var groups = await _context.StudentGroups.Where(g => updateDto.GroupIds.Contains(g.Id)).ToListAsync();
+            foreach (var group in groups)
+            {
+                existingStudent.Groups.Add(group);
+            }
+        }
+
         _studentRepository.Update(existingStudent);
         await _studentRepository.SaveChangesAsync();
 

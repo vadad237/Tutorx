@@ -71,7 +71,7 @@
                                 <td>@student.Email</td>
                                 <td>@(student.CardNumber ?? "-")</td>
                                 <td>@(student.Year?.ToString() ?? "-")</td>
-                                <td>@(student.GroupName ?? "No Group")</td>
+                                <td>@(student.GroupNames.Any() ? string.Join(", ", student.GroupNames) : "No Groups")</td>
                                 <td>
                                     <button class="btn btn-sm btn-warning me-1" @onclick="() => ShowEditModal(student)">
                                         <i class="bi bi-pencil"></i> Edit
@@ -263,7 +263,7 @@
         studentEmail = student.Email;
         studentCardNumber = student.CardNumber;
         studentYear = student.Year;
-        studentGroupId = student.GroupId;
+        studentGroupId = student.GroupIds.FirstOrDefault();
         showModal = true;
     }
 
@@ -284,8 +284,8 @@
                     Email = studentEmail,
                     CardNumber = studentCardNumber,
                     Year = studentYear,
-                    GroupId = studentGroupId
-                };
+                    GroupIds = studentGroupId.HasValue ? new List<int> { studentGroupId.Value } : new List<int>()
+                 };
                 await StudentService.UpdateStudentAsync(editingStudentId.Value, updateDto);
                 successMessage = "Student updated successfully!";
             }
@@ -297,7 +297,7 @@
                     Email = studentEmail,
                     CardNumber = studentCardNumber,
                     Year = studentYear,
-                    GroupId = studentGroupId
+                    GroupIds = studentGroupId.HasValue ? new List<int> { studentGroupId.Value } : new List<int>()
                 };
                 await StudentService.CreateStudentAsync(createDto);
                 successMessage = "Student created successfully!";

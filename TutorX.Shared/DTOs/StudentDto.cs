@@ -7,8 +7,8 @@ public class StudentDto
     public string Email { get; set; } = null!;
     public string? CardNumber { get; set; }
     public int? Year { get; set; }
-    public int? GroupId { get; set; }
-    public string? GroupName { get; set; }
+    public List<int> GroupIds { get; set; } = new();
+    public List<string> GroupNames { get; set; } = new();
 }
 
 public class CreateStudentDto
@@ -17,7 +17,7 @@ public class CreateStudentDto
     public string Email { get; set; } = null!;
     public string? CardNumber { get; set; }
     public int? Year { get; set; }
-    public int? GroupId { get; set; }
+    public List<int> GroupIds { get; set; } = new();
 }
 
 public class UpdateStudentDto
@@ -26,5 +26,5 @@ public class UpdateStudentDto
     public string Email { get; set; } = null!;
     public string? CardNumber { get; set; }
     public int? Year { get; set; }
-    public int? GroupId { get; set; }
+    public List<int> GroupIds { get; set; } = new();
 }
